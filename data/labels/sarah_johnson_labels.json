@@ -1,0 +1,99 @@
+{
+  "schema": "benchmark-label-v1",
+  "doc_id": "sarah_johnson",
+  "source_file": "sample-resume.json",
+  "source_format": "jsonresume",
+  "locator_mode": "field",
+  "corpus_role": "#2 name in prose — plus third-party PII and URLs outside the contact block",
+  "labelled_by": "hand",
+  "labelled_date": "2026-08-01",
+
+  "extraction_notes": [
+    "JSON Resume schema, so field paths are exact and locator_mode is 'field'. No extraction loss.",
+    "basics.location.postalCode is 'CA 94105' — that is a region and a ZIP, not a postal code. Malformed source data. Suppressed either way, but note the schema is not trustworthy field-by-field."
+  ],
+
+  "spans": [
+    { "id": "sj-001", "type": "PERSON", "value": "Sarah Johnson", "field": "basics.name", "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
+    { "id": "sj-002", "type": "EMAIL", "value": "sarah.johnson@email.com", "field": "basics.email", "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
+    { "id": "sj-003", "type": "PHONE", "value": "(555) 123-4567", "field": "basics.phone", "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
+    { "id": "sj-004", "type": "URL", "value": "https://sarahjohnson.dev", "field": "basics.url", "occurrence": 1,
+      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress",
+      "note": "Personal domain — the name IS the domain." },
+    { "id": "sj-005", "type": "ADDRESS", "value": "123 Tech Street", "field": "basics.location.address", "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
+    { "id": "sj-006", "type": "POSTAL", "value": "CA 94105", "field": "basics.location.postalCode", "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
+    { "id": "sj-007", "type": "LOCATION", "value": "San Francisco", "field": "basics.location.city", "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
+    { "id": "sj-008", "type": "LOCATION", "value": "California", "field": "basics.location.region", "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
+    { "id": "sj-009", "type": "HANDLE", "value": "sarahjohnson", "field": "basics.profiles[0].username", "occurrence": 1,
+      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress" },
+    { "id": "sj-010", "type": "URL", "value": "https://linkedin.com/in/sarahjohnson", "field": "basics.profiles[0].url", "occurrence": 1,
+      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress" },
+    { "id": "sj-011", "type": "HANDLE", "value": "sarahjohnson", "field": "basics.profiles[1].username", "occurrence": 1,
+      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress" },
+    { "id": "sj-012", "type": "URL", "value": "https://github.com/sarahjohnson", "field": "basics.profiles[1].url", "occurrence": 1,
+      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress" },
+
+    { "id": "sj-013", "type": "PERSON", "value": "John Smith", "field": "references[0].name", "occurrence": 1,
+      "subject": "third_party", "context": "structured", "phase": 1, "expected": "suppress",
+      "note": "A referee. Not a user of the app, never consented, has no idea their name is being transmitted. Sits outside the candidate contact block, so the header/body split does NOT protect it." },
+    { "id": "sj-014", "type": "PERSON", "value": "Sarah", "field": "references[0].reference", "occurrence": 1,
+      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
+      "note": "THE case the NER tier exists for. Given name only, mid-sentence, no adjacent contact cues. A string-match tokenizer keyed on 'Sarah Johnson' misses it. Full text: '...Sarah is an exceptional developer...'" },
+    { "id": "sj-015", "type": "ORG", "value": "TechCorp Inc.", "field": "references[0].reference", "occurrence": 1,
+      "subject": "third_party", "context": "prose", "phase": 2, "expected": "pass",
+      "note": "Combined with sj-013's name and the title 'Senior Engineering Manager', this identifies a specific named individual at a specific named employer. Quasi-identifier for a third party." },
+    { "id": "sj-016", "type": "PERSON", "value": "Dr. Emily Chen", "field": "references[1].name", "occurrence": 1,
+      "subject": "third_party", "context": "structured", "phase": 1, "expected": "suppress",
+      "note": "Honorific attached. NER may return 'Emily Chen' and drop 'Dr.', producing a partial-span match. Decide whether the harness scores partial spans as TP or FN — recommend FN, since a leaked honorific plus surname is still identifying." },
+    { "id": "sj-017", "type": "PERSON", "value": "Sarah", "field": "references[1].reference", "occurrence": 1,
+      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
+      "note": "'Sarah was an outstanding student...'" },
+    { "id": "sj-018", "type": "ORG", "value": "Stanford University", "field": "references[1].reference", "occurrence": 1,
+      "subject": "third_party", "context": "prose", "phase": 2, "expected": "pass" },
+
+    { "id": "sj-019", "type": "URL", "value": "https://github.com/sarahjohnson/ecommerce", "field": "projects[0].url", "occurrence": 1,
+      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress",
+      "note": "CRITICAL: this is OUTSIDE basics{}. If the suppressor only covers the contact block, this leaks the candidate's full name via the URL path. Direct test of spec v0.5 open question in method §6." },
+    { "id": "sj-020", "type": "URL", "value": "https://github.com/sarahjohnson/taskmanager", "field": "projects[1].url", "occurrence": 1,
+      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress",
+      "note": "Same gap as sj-019." },
+
+    { "id": "sj-021", "type": "ORG", "value": "Stanford University", "field": "education[0].institution", "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 2, "expected": "pass" },
+    { "id": "sj-022", "type": "ORG", "value": "University of California, Berkeley", "field": "education[1].institution", "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 2, "expected": "pass" }
+  ],
+
+  "negative_controls": [
+    { "value": "React",      "note": "Capitalised verb." },
+    { "value": "Node.js",    "note": "" },
+    { "value": "Redis",      "note": "Reads as a surname." },
+    { "value": "Express.js", "note": "" },
+    { "value": "Kubernetes", "note": "Greek-looking proper noun — plausible PERSON or LOCATION to a weak model." },
+    { "value": "Stripe",     "note": "In projects[0].description. ORG, but a payment vendor, not the candidate's employer." },
+    { "value": "Code for Good", "note": "Volunteer org. Sentence-shaped — 'Code for Good' parses as an imperative clause." },
+    { "value": "GraphQL",    "note": "" },
+    { "value": "Dean's List", "note": "Award title containing a possessive proper noun." }
+  ],
+
+  "known_traps": [
+    "Two 'Sarah' in-prose hits (sj-014, sj-017) buried in referee quotes — the field most likely to be treated as harmless body content.",
+    "Three third-party individuals' details (sj-013, sj-016, plus titles/employers) that the header/body split does not cover.",
+    "Two GitHub URLs outside basics{} (sj-019, sj-020) containing the candidate's name — tests whether URL suppression is field-scoped or global.",
+    "'Dr. Emily Chen' — partial-span scoring decision.",
+    "basics.summary is deliberately clean of names; confirms the detector is not simply flagging every summary field."
+  ],
+
+  "expected_phase1_counts": {
+    "total_spans": 18,
+    "by_context": { "structured": 9, "url": 5, "derived": 2, "prose": 2 },
+    "by_subject": { "candidate": 16, "third_party": 2 }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "schema": "benchmark-label-v1",
+  "doc_id": "ivy_haddington",
+  "source_file": "Ivy_Haddington.pdf",
+  "source_format": "pdf",
+  "locator_mode": "document",
+  "corpus_role": "#3 extraction damage — fused job entries; plus job-search intent disclosure",
+  "labelled_by": "hand",
+  "labelled_date": "2026-08-01",
+
+  "extraction_notes": [
+    "'...to complete projectsSkyline Solutions, Portland, ME, Product Manager' — the newline between the Morris and Stern bullet list and the Skyline Solutions job header is lost. Two separate employment entries are fused into one string. Section-splitting will assign the Skyline role to the wrong employer.",
+    "'• C Agile methodologies including Scrum and Kanban' — a stray 'C' from a bullet/checkbox glyph.",
+    "Home location (Miami, FL) does not match any employment location (Portland, ME). Not an error — but a detector using geographic-consistency heuristics would be misled."
+  ],
+
+  "spans": [
+    { "id": "ih-001", "type": "PERSON", "value": "Ivy Haddington", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
+      "note": "'Ivy' is also a common noun and a plant. NER relies on position and casing here; in the header it should be safe, but see negative controls." },
+    { "id": "ih-002", "type": "LOCATION", "value": "Miami, FL", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
+    { "id": "ih-003", "type": "PHONE", "value": "771-555-0100", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
+      "note": "Dash-separated, no parentheses, no country code. Different shape from john_doe's '(123) 456-7890'. Between the two plus thomasdavis's bare-digit AU number, the corpus covers three distinct phone shapes — the minimum for a credible phone recall claim." },
+    { "id": "ih-004", "type": "EMAIL", "value": "ihaddington@email.com", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
+    { "id": "ih-005", "type": "DERIVATIVE", "value": "ihaddington", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress",
+      "note": "Initial-plus-surname. A weaker derivative than john_doe's 'johndoe' but still recovers the surname exactly, and the initial narrows the given name to a handful." },
+
+    { "id": "ih-006", "type": "LOCATION", "value": "Portland, ME", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
+      "note": "Paradise Tech line." },
+    { "id": "ih-007", "type": "LOCATION", "value": "Portland, ME", "field": null, "occurrence": 2,
+      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
+      "note": "Morris and Stern line." },
+    { "id": "ih-008", "type": "LOCATION", "value": "Portland, ME", "field": null, "occurrence": 3,
+      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
+      "note": "Skyline Solutions line — the one fused to the preceding bullet. If the deconstructor mis-sections here, this span may be attributed to the wrong field, which changes which tier evaluates it. Tests robustness of field attribution, not just detection." },
+
+    { "id": "ih-009", "type": "ORG", "value": "Corkboard Tech", "field": null, "occurrence": 1,
+      "subject": "third_party", "context": "prose", "phase": 2, "expected": "pass",
+      "note": "NOT PII, but sensitive in a way the policy table does not currently model. This is the employer the candidate is APPLYING TO, named in their own summary. It discloses active job-search intent and a specific target. If a resume were ever processed on behalf of a different employer, this leaks that the candidate is interviewing elsewhere. Flagged for the round-2 register — 'sensitive but not personal data' is a category the spec has no slot for." },
+    { "id": "ih-010", "type": "ORG", "value": "Garden University", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 2, "expected": "pass" },
+    { "id": "ih-011", "type": "ORG", "value": "Paradise Tech", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass" },
+    { "id": "ih-012", "type": "ORG", "value": "Morris and Stern", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass",
+      "note": "Two surnames joined by 'and' — the classic law/consultancy firm shape. NER will very likely return this as PERSON or as two PERSONs. If phase-1 PERSON tokenization fires here, the employer name is destroyed in the output. Highest false-positive risk in this document." },
+    { "id": "ih-013", "type": "ORG", "value": "Skyline Solutions", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass" }
+  ],
+
+  "negative_controls": [
+    { "value": "Jira",    "note": "" },
+    { "value": "Hive",    "note": "Common noun, capitalised. Tool name." },
+    { "value": "GanttPro", "note": "Contains 'Gantt', a surname." },
+    { "value": "Kanban",  "note": "Loanword, capitalised." },
+    { "value": "Scrum",   "note": "" },
+    { "value": "MS Office & MS Project", "note": "Ampersand plus repeated 'MS' prefix." },
+    { "value": "Ivy",     "note": "CONTRAST — as the candidate's given name in ih-001 it is a true positive. Listed here to flag that 'Ivy' does not recur elsewhere; a standalone hit would be a false positive. No standalone occurrence exists in this document." },
+    { "value": "Project Management Professional", "note": "Certification title; three capitalised words." },
+    { "value": "PMI Professional in Business Analysis", "note": "" }
+  ],
+
+  "known_traps": [
+    "ih-012 'Morris and Stern' — two surnames as an employer name. The most likely PERSON false positive in the corpus, and one that visibly corrupts output if it fires.",
+    "ih-008 — location inside a fused, mis-sectioned line; tests field attribution under extraction damage.",
+    "ih-009 'Corkboard Tech' — target-employer disclosure. Not PII, no policy slot, flagged for round 2.",
+    "ih-003 — third distinct phone format in the corpus.",
+    "Name does not appear in prose; the summary uses 'my leadership expertise' rather than the name. Second clean case alongside rosie_miller."
+  ],
+
+  "expected_phase1_counts": {
+    "total_spans": 8,
+    "by_context": { "structured": 4, "derived": 1, "prose": 3 }
+  }
+}

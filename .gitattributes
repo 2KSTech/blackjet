@@ -1,0 +1,41 @@
+# blackjet — .gitattributes
+#
+# Why this file exists: VERSIONS.md v0.1.5 records a session lost to run.sh
+# losing its exec bit in transit. The related and equally silent failure is
+# line endings — a shell script checked out with CRLF fails on Linux with
+# "bad interpreter: /bin/bash^M", which is a confusing error for a file that
+# looks correct. The rules below pin LF on everything that is executed or
+# parsed, regardless of the platform doing the checkout.
+#
+# Note: git tracks the executable bit itself in the index (mode 100755), not
+# here. After the first commit, verify with:
+#     git ls-files --stage setup.sh run.sh
+# and repair if needed with:
+#     git update-index --chmod=+x setup.sh run.sh
+
+# Let git detect text vs binary, normalizing to LF in the repository.
+* text=auto
+
+# ---- must be LF, always -----------------------------------------------------
+*.sh    text eol=lf
+*.py    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.html  text eol=lf
+*.txt   text eol=lf
+.env.example text eol=lf
+
+# ---- binary: never normalize, never diff as text ----------------------------
+*.pdf   binary
+*.zip   binary
+*.png   binary
+*.jpg   binary
+*.gz    binary
+
+# ---- language statistics ----------------------------------------------------
+# Keep the sample corpus and hand-labelled ground truth out of GitHub's
+# language bar, which otherwise reports this project as mostly JSON.
+data/labels/**  linguist-generated=true
+data/resumes/** linguist-vendored=true

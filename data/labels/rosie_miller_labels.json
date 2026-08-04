@@ -1,0 +1,74 @@
+{
+  "schema": "benchmark-label-v1",
+  "doc_id": "rosie_miller",
+  "source_file": "rosie_miller.txt",
+  "source_format": "txt",
+  "locator_mode": "document",
+  "corpus_role": "#6 clean case — candidate name never appears in prose; low PII density",
+  "labelled_by": "hand",
+  "labelled_date": "2026-08-01",
+
+  "extraction_notes": [
+    "Plain text, no extraction loss.",
+    "Employer/location separator is an EN-DASH (U+2013), not a hyphen. A splitter written against '-' silently fails to separate employer from location.",
+    "'TGI Fridays – Pittsburgh, PA Assistant / Restaurant Manager' — the job title is fused onto the location line by a missing break. The word 'Assistant' ends up attached to the location string."
+  ],
+
+  "spans": [
+    { "id": "rm-001", "type": "PERSON", "value": "Rosie Miller", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
+      "note": "Only occurrence in the entire document. This resume is the control for 'does suppression alone suffice' — if names-in-prose are rare in the real population, most documents look like this one and the NER tier earns little." },
+    { "id": "rm-002", "type": "LOCATION", "value": "Pittsburgh, PA 15201", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
+      "note": "Longest-match: contains rm-004's string. Home location plus ZIP." },
+    { "id": "rm-003", "type": "PHONE", "value": "(555) 555-5555", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
+      "note": "Repeating-digit placeholder. A detector with a heuristic that down-weights repeated digits as 'obviously fake' will miss it. Real resumes do contain placeholder-looking numbers." },
+    { "id": "rm-004", "type": "EMAIL", "value": "example@example.com", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
+      "note": "TRAP. 'example.com' is the canonical reserved documentation domain. Any detector or test-fixture filter that skips it will produce a false negative here — and the same filter would skip a real address at a real domain that happened to be allow-listed. Tests that suppression is unconditional." },
+    { "id": "rm-005", "type": "LOCATION", "value": "Pittsburgh, PA", "field": null, "occurrence": 2,
+      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
+      "note": "Outback Steakhouse line. Occurrence 1 is nested in rm-002." },
+    { "id": "rm-006", "type": "LOCATION", "value": "Pittsburgh, PA", "field": null, "occurrence": 3,
+      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
+      "note": "TGI Fridays line — note the fused 'Assistant' following." },
+    { "id": "rm-007", "type": "LOCATION", "value": "Pittsburgh, PA", "field": null, "occurrence": 4,
+      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
+      "note": "BJ's Restaurants line." },
+    { "id": "rm-008", "type": "LOCATION", "value": "Pittsburgh, PA", "field": null, "occurrence": 5,
+      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
+      "note": "Park Point University line. No separator at all between institution and location here — 'Park Point University Pittsburgh, PA'." },
+
+    { "id": "rm-009", "type": "ORG", "value": "Outback Steakhouse", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass" },
+    { "id": "rm-010", "type": "ORG", "value": "TGI Fridays", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass" },
+    { "id": "rm-011", "type": "ORG", "value": "BJ's Restaurants, Inc", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass",
+      "note": "Apostrophe plus 'Inc' without a period. Tokenizer boundary edge case." },
+    { "id": "rm-012", "type": "ORG", "value": "Park Point University", "field": null, "occurrence": 1,
+      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass" }
+  ],
+
+  "negative_controls": [
+    { "value": "Fridays",  "note": "Inside 'TGI Fridays'. A weekday token — if a date/temporal recognizer is ever added it will collide here." },
+    { "value": "Miller",   "note": "CONTRAST — the surname appears ONLY inside rm-001. It does not appear standalone anywhere. If the detector reports a standalone 'Miller' hit, that is a false positive, not a missed name." },
+    { "value": "Conflict resolution techniques", "note": "Skills entry." },
+    { "value": "Service-oriented", "note": "Hyphenated capitalised adjective." },
+    { "value": "Bachelor of Arts Hospitality Management", "note": "Degree title, no separator from the preceding location line." }
+  ],
+
+  "known_traps": [
+    "rm-004 — 'example@example.com' tests that email suppression is unconditional and not filtered by reserved-domain heuristics.",
+    "rm-003 — repeating-digit phone; tests the same for phone.",
+    "Five nested/repeated 'Pittsburgh, PA' spans; occurrence 1 sits inside the ZIP-bearing header span and must be consumed longest-match-first.",
+    "En-dash separators throughout — a parsing failure here changes field boundaries, which changes which tier sees each span.",
+    "Name appears exactly once, in the header. This is the corpus's baseline for 'suppression alone is sufficient'."
+  ],
+
+  "expected_phase1_counts": {
+    "total_spans": 8,
+    "by_context": { "structured": 4, "prose": 4 }
+  }
+}

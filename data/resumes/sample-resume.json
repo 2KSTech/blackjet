@@ -1,0 +1,270 @@
+{
+  "basics": {
+    "name": "Sarah Johnson",
+    "label": "Senior Software Engineer",
+    "image": "",
+    "email": "sarah.johnson@email.com",
+    "phone": "(555) 123-4567",
+    "url": "https://sarahjohnson.dev",
+    "summary": "Experienced software engineer with 8+ years of experience in full-stack development, specializing in React, Node.js, and cloud technologies. Passionate about creating scalable, user-friendly applications and mentoring junior developers.",
+    "location": {
+      "address": "123 Tech Street",
+      "postalCode": "CA 94105",
+      "city": "San Francisco",
+      "countryCode": "US",
+      "region": "California"
+    },
+    "profiles": [
+      {
+        "network": "LinkedIn",
+        "username": "sarahjohnson",
+        "url": "https://linkedin.com/in/sarahjohnson"
+      },
+      {
+        "network": "GitHub",
+        "username": "sarahjohnson",
+        "url": "https://github.com/sarahjohnson"
+      }
+    ]
+  },
+  "work": [
+    {
+      "name": "TechCorp Inc.",
+      "position": "Senior Software Engineer",
+      "url": "https://techcorp.com",
+      "startDate": "2021-03-01",
+      "endDate": "",
+      "summary": "Lead development of microservices architecture and mentor junior developers. Implemented CI/CD pipelines and improved system performance by 40%.",
+      "highlights": [
+        "Led a team of 5 developers in building a new e-commerce platform",
+        "Reduced API response times by 40% through optimization",
+        "Implemented automated testing that increased code coverage to 90%",
+        "Mentored 3 junior developers and conducted code reviews"
+      ]
+    },
+    {
+      "name": "StartupXYZ",
+      "position": "Full Stack Developer",
+      "url": "https://startupxyz.com",
+      "startDate": "2019-01-15",
+      "endDate": "2021-02-28",
+      "summary": "Built and maintained web applications using React, Node.js, and PostgreSQL. Collaborated with design team to implement user-friendly interfaces.",
+      "highlights": [
+        "Developed 3 major features that increased user engagement by 25%",
+        "Optimized database queries reducing load times by 60%",
+        "Implemented real-time notifications using WebSockets",
+        "Collaborated with UX team to improve user experience"
+      ]
+    },
+    {
+      "name": "Digital Solutions",
+      "position": "Junior Developer",
+      "url": "https://digitalsolutions.com",
+      "startDate": "2017-06-01",
+      "endDate": "2018-12-31",
+      "summary": "Developed web applications using JavaScript, HTML, CSS, and PHP. Worked on bug fixes and feature implementations.",
+      "highlights": [
+        "Fixed 50+ bugs across multiple applications",
+        "Implemented responsive design for mobile compatibility",
+        "Created reusable component library",
+        "Participated in agile development process"
+      ]
+    }
+  ],
+  "volunteer": [
+    {
+      "organization": "Code for Good",
+      "position": "Volunteer Developer",
+      "url": "https://codeforgood.org",
+      "startDate": "2020-01-01",
+      "endDate": "",
+      "summary": "Develop software solutions for non-profit organizations to help them better serve their communities.",
+      "highlights": [
+        "Built a volunteer management system for local food bank",
+        "Created a donation tracking application",
+        "Mentored high school students in coding workshops"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Stanford University",
+      "url": "https://stanford.edu",
+      "area": "Computer Science",
+      "studyType": "Master",
+      "startDate": "2015-09-01",
+      "endDate": "2017-05-30",
+      "score": "3.9",
+      "courses": [
+        "Advanced Algorithms",
+        "Machine Learning",
+        "Software Engineering",
+        "Database Systems"
+      ]
+    },
+    {
+      "institution": "University of California, Berkeley",
+      "url": "https://berkeley.edu",
+      "area": "Computer Science",
+      "studyType": "Bachelor",
+      "startDate": "2011-09-01",
+      "endDate": "2015-05-30",
+      "score": "3.8",
+      "courses": [
+        "Data Structures",
+        "Computer Architecture",
+        "Operating Systems",
+        "Web Development"
+      ]
+    }
+  ],
+  "awards": [
+    {
+      "title": "Best Developer Award",
+      "date": "2022-12-01",
+      "awarder": "TechCorp Inc.",
+      "summary": "Recognized for outstanding contributions to the team and exceptional code quality."
+    },
+    {
+      "title": "Dean's List",
+      "date": "2015-05-01",
+      "awarder": "Stanford University",
+      "summary": "Achieved academic excellence with GPA above 3.8."
+    }
+  ],
+  "certificates": [
+    {
+      "name": "AWS Certified Solutions Architect",
+      "date": "2022-06-15",
+      "issuer": "Amazon Web Services",
+      "url": "https://aws.amazon.com/certification/"
+    },
+    {
+      "name": "Google Cloud Professional Developer",
+      "date": "2021-11-20",
+      "issuer": "Google",
+      "url": "https://cloud.google.com/certification/"
+    }
+  ],
+  "publications": [
+    {
+      "name": "Microservices Best Practices",
+      "publisher": "Tech Blog",
+      "releaseDate": "2022-03-15",
+      "url": "https://techblog.com/microservices",
+      "summary": "A comprehensive guide to implementing microservices architecture in modern applications."
+    }
+  ],
+  "skills": [
+    {
+      "name": "Web Development",
+      "level": "Expert",
+      "keywords": [
+        "React",
+        "Node.js",
+        "JavaScript",
+        "TypeScript",
+        "HTML",
+        "CSS"
+      ]
+    },
+    {
+      "name": "Backend Development",
+      "level": "Advanced",
+      "keywords": [
+        "Express.js",
+        "PostgreSQL",
+        "MongoDB",
+        "Redis",
+        "GraphQL"
+      ]
+    },
+    {
+      "name": "Cloud Technologies",
+      "level": "Advanced",
+      "keywords": [
+        "AWS",
+        "Docker",
+        "Kubernetes",
+        "CI/CD",
+        "Microservices"
+      ]
+    },
+    {
+      "name": "Leadership",
+      "level": "Intermediate",
+      "keywords": [
+        "Team Management",
+        "Mentoring",
+        "Project Planning",
+        "Code Reviews"
+      ]
+    }
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "fluency": "Native speaker"
+    },
+    {
+      "language": "Spanish",
+      "fluency": "Conversational"
+    }
+  ],
+  "interests": [
+    {
+      "name": "Open Source",
+      "keywords": [
+        "GitHub",
+        "Contributing",
+        "Community"
+      ]
+    },
+    {
+      "name": "Machine Learning",
+      "keywords": [
+        "Python",
+        "TensorFlow",
+        "Data Science"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "name": "John Smith",
+      "reference": "Senior Engineering Manager at TechCorp Inc. Sarah is an exceptional developer who consistently delivers high-quality code and mentors her teammates effectively."
+    },
+    {
+      "name": "Dr. Emily Chen",
+      "reference": "Professor at Stanford University. Sarah was an outstanding student who showed great potential in software engineering and research."
+    }
+  ],
+  "projects": [
+    {
+      "name": "E-commerce Platform",
+      "startDate": "2022-01-01",
+      "endDate": "2022-06-30",
+      "description": "Built a scalable e-commerce platform using React, Node.js, and PostgreSQL. Implemented payment processing, inventory management, and admin dashboard.",
+      "highlights": [
+        "Handled 10,000+ concurrent users",
+        "Integrated Stripe payment processing",
+        "Implemented real-time inventory tracking",
+        "Created comprehensive admin dashboard"
+      ],
+      "url": "https://github.com/sarahjohnson/ecommerce"
+    },
+    {
+      "name": "Task Management App",
+      "startDate": "2021-08-01",
+      "endDate": "2021-12-31",
+      "description": "Developed a collaborative task management application with real-time updates and team collaboration features.",
+      "highlights": [
+        "Real-time updates using WebSockets",
+        "Team collaboration features",
+        "Mobile-responsive design",
+        "Integration with calendar apps"
+      ],
+      "url": "https://github.com/sarahjohnson/taskmanager"
+    }
+  ]
+} 

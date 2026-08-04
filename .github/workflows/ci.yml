@@ -1,0 +1,374 @@
+# blackjet — continuous integration
+#
+# WHAT THIS PROVES
+#   1. setup.sh completes from a clean checkout on a clean machine, in both the
+#      regex-only and the NER (en_core_web_sm) modes.
+#   2. run.sh starts the server and /api/status answers.
+#   3. Every document in data/resumes/ survives a full round trip through
+#      POST /api/run and comes back with ok:true and zero unmatched tokens.
+#
+# HOW THE MODEL CALL IS MADE WITHOUT A KEY
+#   scripts/mock_ollama.py is the test double added in v0.2.2. It mirrors the
+#   real gateway: it serves native /api/generate and returns 405 on
+#   /v1/chat/completions, which is precisely the regression that shipped in
+#   v0.2.0. CI points AI_PROVIDER_URL at it, so the Ollama code path — URL
+#   handling, Bearer auth, body shape, response parsing, rehydration — is
+#   exercised on every push with no API key and no GPU. The mock echoes the
+#   prompt, so any token the pipeline fails to preserve shows up as an
+#   unmatched token and fails the build.
+#   IT IS NOT A MODEL. This job proves plumbing, never detection quality.
+#
+# COST
+#   Runs on GitHub-hosted ubuntu-latest runners. Minutes on a private repo are
+#   billed against the account's monthly free allotment. The regex leg is
+#   ~1-2 min; the NER leg is a few minutes (presidio + spaCy install). If the
+#   allotment ever becomes a constraint, change the `on:` block below to
+#   `workflow_dispatch` only and run CI on demand.
+#
+# TRIGGERS
+#   Single-owner repo, commit-and-push-to-main workflow, so: every push to
+#   main, plus a manual button. pull_request is included so that if a branch
+#   is ever opened it is covered too; it costs nothing when unused.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+    # Documentation-only commits do not need a five-minute install.
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitattributes'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A second push while the first is still installing supersedes it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: smoke (${{ matrix.mode }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    strategy:
+      # Both legs always run to completion: a failure in one must not hide the
+      # result of the other.
+      fail-fast: false
+      matrix:
+        include:
+          - mode: regex
+            setup_flag: '--no-ner'
+            use_ner: '0'
+          - mode: ner-small
+            setup_flag: '--small'
+            use_ner: '1'
+
+    env:
+      PYTHON_VERSION: '3.11'
+      BLACKJET_PORT: '8080'
+      MOCK_OLLAMA_PORT: '11500'
+      # DEBUG so that a failure leaves a usable log in the artifact. The
+      # redaction filter is active at every level; check_log_sanitization.py
+      # is the test that proves it.
+      BLACKJET_LOG_LEVEL: DEBUG
+
+    steps:
+      # ---------------------------------------------------------------- setup
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ matrix.mode }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ matrix.mode }}-
+            pip-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-
+
+      - name: Report environment
+        run: |
+          set -euo pipefail
+          echo "::group::environment"
+          echo "runner   : ${RUNNER_OS} / $(uname -srm)"
+          echo "python   : $(python3 -V)"
+          echo "mode     : ${{ matrix.mode }} (setup.sh ${{ matrix.setup_flag }})"
+          echo "commit   : ${GITHUB_SHA}"
+          echo "disk free: $(df -h . | awk 'NR==2 {print $4}')"
+          echo "::endgroup::"
+
+      - name: Restore executable bits
+        # git tracks mode 100755, so this is normally a no-op. It is kept
+        # because VERSIONS.md v0.1.5 records exactly this bit going missing,
+        # and a no-op chmod is cheaper than diagnosing "permission denied".
+        run: |
+          set -euo pipefail
+          chmod +x setup.sh run.sh
+          ls -l setup.sh run.sh
+
+      # ------------------------------------------------------------- install
+      - name: Preflight (setup.sh --check)
+        # Runs the preflight alone first. If the environment is wrong, the log
+        # says so on its own line instead of inside 200 lines of pip output.
+        run: |
+          set -euo pipefail
+          ./setup.sh --check
+
+      - name: Install (setup.sh ${{ matrix.setup_flag }} --yes)
+        run: |
+          set -euo pipefail
+          ./setup.sh ${{ matrix.setup_flag }} --yes
+
+      - name: Verify interpreter and imports
+        run: |
+          set -euo pipefail
+          test -x .venv/bin/python3 || { echo "::error::.venv/bin/python3 missing after setup.sh"; exit 1; }
+          echo "::group::venv inventory"
+          .venv/bin/python3 -V
+          .venv/bin/python3 -m pip list
+          echo "::endgroup::"
+          .venv/bin/python3 - <<'PY'
+          import importlib, sys
+          required = ["pypdf", "certifi"]
+          optional = ["presidio_analyzer", "spacy"]
+          missing = []
+          for name in required:
+              try:
+                  importlib.import_module(name)
+                  print(f"OK       {name}")
+              except Exception as exc:
+                  missing.append(name)
+                  print(f"MISSING  {name}: {exc}", file=sys.stderr)
+          for name in optional:
+              try:
+                  importlib.import_module(name)
+                  print(f"OK       {name} (optional)")
+              except Exception as exc:
+                  print(f"absent   {name} (optional): {exc}")
+          if missing:
+              sys.exit(f"required package(s) not importable: {', '.join(missing)}")
+          PY
+
+      - name: Byte-compile all sources
+        # Catches syntax errors in files no smoke path happens to import.
+        run: |
+          set -euo pipefail
+          .venv/bin/python3 -m compileall -q blackjet scripts
+
+      # ------------------------------------------------------------ configure
+      - name: Write CI .env
+        # setup.sh has already written a .env with the detection keys. These
+        # lines are appended, and a later assignment wins when run.sh sources
+        # the file, so this overrides without editing what setup.sh produced.
+        run: |
+          set -euo pipefail
+          {
+            echo ""
+            echo "# ---- appended by CI (.github/workflows/ci.yml) ----"
+            echo "AI_PROVIDER=ollama"
+            echo "AI_PROVIDER_URL=http://127.0.0.1:${MOCK_OLLAMA_PORT}/api/generate"
+            echo "AI_PROVIDER_APIKEY=ci-not-a-real-token"
+            echo "AI_PROVIDER_MODEL=ci-mock"
+            echo "BLACKJET_MODEL_TIMEOUT=60"
+            echo "BLACKJET_HOST=127.0.0.1"
+            echo "BLACKJET_PORT=${BLACKJET_PORT}"
+            echo "BLACKJET_LOG_LEVEL=${BLACKJET_LOG_LEVEL}"
+            echo "BLACKJET_USE_NER=${{ matrix.use_ner }}"
+          } >> .env
+          echo "::group::.env in effect (values are CI-only, no real secrets)"
+          cat .env
+          echo "::endgroup::"
+
+      # ------------------------------------------------------------- run them
+      - name: Start mock Ollama gateway
+        run: |
+          set -euo pipefail
+          nohup .venv/bin/python3 scripts/mock_ollama.py "${MOCK_OLLAMA_PORT}" \
+            > mock_ollama.out 2>&1 &
+          echo "$!" > mock_ollama.pid
+          for i in $(seq 1 30); do
+            if curl -fsS -X POST "http://127.0.0.1:${MOCK_OLLAMA_PORT}/api/generate" \
+                 -H 'Content-Type: application/json' \
+                 -d '{"model":"ci-mock","prompt":"ping","stream":false}' \
+                 -o /dev/null; then
+              echo "mock gateway is up after ${i} attempt(s)"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::mock_ollama.py did not become ready within 30s"
+          cat mock_ollama.out || true
+          exit 1
+
+      - name: Assert mock rejects the v0.2.0 wrong endpoint
+        # Guards the v0.2.2 regression directly: if someone reintroduces the
+        # OpenAI-compat default path, the mock 405s and this job fails loudly.
+        run: |
+          set -euo pipefail
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+            "http://127.0.0.1:${MOCK_OLLAMA_PORT}/v1/chat/completions" \
+            -H 'Content-Type: application/json' -d '{}')
+          echo "/v1/chat/completions returned HTTP ${code} (405 expected)"
+          if [ "${code}" != "405" ]; then
+            echo "::error::mock gateway should 405 on /v1/chat/completions, got ${code}"
+            exit 1
+          fi
+
+      - name: Start blackjet server
+        run: |
+          set -euo pipefail
+          nohup ./run.sh > blackjet_server.out 2>&1 &
+          echo "$!" > blackjet.pid
+          # NER model load adds seconds to startup, hence the generous window.
+          for i in $(seq 1 90); do
+            if curl -fsS "http://127.0.0.1:${BLACKJET_PORT}/api/status" -o status.json; then
+              echo "server is up after ${i}s"
+              echo "::group::/api/status"
+              cat status.json
+              echo
+              echo "::endgroup::"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::server did not answer /api/status within 90s"
+          cat blackjet_server.out || true
+          exit 1
+
+      - name: Assert model backend is configured
+        run: |
+          set -euo pipefail
+          configured=$(jq -r '.model_configured' status.json)
+          echo "model_configured = ${configured}"
+          if [ "${configured}" != "true" ]; then
+            echo "::error::server reports no model backend; the .env step did not take effect"
+            jq . status.json
+            exit 1
+          fi
+
+      - name: Round-trip every corpus document
+        # The real assertion. Each document goes detect -> tokenize -> tripwire
+        # -> mock model -> rehydrate. ok:false, any unmatched token, or a
+        # non-200 fails the build, and every result is printed either way.
+        run: |
+          set -euo pipefail
+          curl -fsS "http://127.0.0.1:${BLACKJET_PORT}/api/corpus" -o corpus.json
+          echo "::group::corpus"
+          jq . corpus.json
+          echo "::endgroup::"
+
+          count=$(jq '.documents | length' corpus.json)
+          if [ "${count}" -eq 0 ]; then
+            echo "::error::corpus is empty; data/resumes/ did not survive checkout"
+            exit 1
+          fi
+          echo "${count} document(s) to run"
+
+          failures=0
+          while read -r doc_id; do
+            echo "::group::run ${doc_id}"
+            http=$(curl -s -o "run_${doc_id}.json" -w '%{http_code}' \
+              -X POST "http://127.0.0.1:${BLACKJET_PORT}/api/run" \
+              -H 'Content-Type: application/json' \
+              --max-time 180 \
+              -d "$(jq -nc --arg d "${doc_id}" '{doc_id:$d}')") || http=000
+
+            if [ "${http}" != "200" ]; then
+              echo "::error::${doc_id}: HTTP ${http} from /api/run"
+              cat "run_${doc_id}.json" || true
+              failures=$((failures + 1))
+              echo "::endgroup::"
+              continue
+            fi
+
+            ok=$(jq -r '.ok // false' "run_${doc_id}.json")
+            unmatched=$(jq -r '.stages.rehydrated.unmatched_tokens // [] | length' "run_${doc_id}.json")
+            elapsed=$(jq -r '.elapsed_seconds // "?"' "run_${doc_id}.json")
+            echo "${doc_id}: ok=${ok} unmatched=${unmatched} elapsed=${elapsed}s"
+
+            if [ "${ok}" != "true" ] || [ "${unmatched}" != "0" ]; then
+              echo "::error::${doc_id}: round trip failed (ok=${ok}, unmatched=${unmatched})"
+              jq '{ok, error, unmatched: .stages.rehydrated.unmatched_tokens}' "run_${doc_id}.json" || true
+              failures=$((failures + 1))
+            fi
+            echo "::endgroup::"
+          done < <(jq -r '.documents[].doc_id' corpus.json)
+
+          echo "-----------------------------------------------"
+          echo "${count} document(s) run, ${failures} failure(s)"
+          if [ "${failures}" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Log sanitization check
+        # scripts/check_log_sanitization.py asserts no labelled PII value ever
+        # reaches a served log line. Meaningful in both modes; NER finds more
+        # to redact, so the ner-small leg is the stronger run of the two.
+        run: |
+          set -euo pipefail
+          .venv/bin/python3 scripts/check_log_sanitization.py
+
+      # ------------------------------------------------------------- teardown
+      - name: Collect server logs
+        if: always()
+        run: |
+          set -uo pipefail
+          echo "::group::blackjet server stdout/stderr"
+          cat blackjet_server.out 2>/dev/null || echo "(no server output captured)"
+          echo "::endgroup::"
+          echo "::group::mock gateway stdout/stderr"
+          cat mock_ollama.out 2>/dev/null || echo "(no mock output captured)"
+          echo "::endgroup::"
+          # The in-process ring buffer, which holds records the redaction
+          # filter has already passed. since=0 returns the whole backlog.
+          curl -fsS "http://127.0.0.1:${BLACKJET_PORT}/api/logs?since=0" \
+            -o blackjet_ring_buffer.json 2>/dev/null \
+            && echo "ring buffer captured ($(wc -c < blackjet_ring_buffer.json) bytes)" \
+            || echo "(ring buffer unavailable; server may already be down)"
+
+      - name: Stop background processes
+        if: always()
+        run: |
+          set -uo pipefail
+          for pidfile in blackjet.pid mock_ollama.pid; do
+            if [ -f "${pidfile}" ]; then
+              pid=$(cat "${pidfile}")
+              # run.sh may exec a child; kill the process group to be sure.
+              kill -TERM -- "-${pid}" 2>/dev/null || kill -TERM "${pid}" 2>/dev/null || true
+              echo "signalled ${pidfile} (pid ${pid})"
+            fi
+          done
+          sleep 2
+          pkill -f 'blackjet.server' 2>/dev/null || true
+          pkill -f 'mock_ollama.py' 2>/dev/null || true
+          echo "teardown complete"
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blackjet-ci-${{ matrix.mode }}-${{ github.run_number }}
+          # .env is deliberately NOT uploaded. It holds no real secret in CI,
+          # but the habit of shipping .env into an artifact is the wrong one.
+          path: |
+            blackjet_server.out
+            mock_ollama.out
+            blackjet_ring_buffer.json
+            status.json
+            corpus.json
+            run_*.json
+          if-no-files-found: warn
+          retention-days: 7
