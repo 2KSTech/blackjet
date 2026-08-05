@@ -1,6 +1,6 @@
-# blackjet
+# BlackJet™
 
-> Stealth Airframes for ferrying PII
+> A stealthy low-observable technology to ferry résumé PII over public channels
 
 **Send a resume through an LLM API without the LLM ever seeing a name, email,
 phone number or address.**
@@ -202,7 +202,7 @@ data/labels/         hand-labelled ground truth for the corpus
 A live demo of this project, using the code from this repo is available at:
  [2KSTech's BlackJet Demo Site](https://blackjet.2kstech.fun) 
 
-## Sample corpus
+## Sample Corpus
 
 The resume corpus includes the real-life resume of Thomas Alwyn Davis as
 `thomasdavis.json`, through his generous permission.  Thomas is the founder of
