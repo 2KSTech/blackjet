@@ -7,117 +7,281 @@
   "corpus_role": "#1 baseline — candidate name appears in header only, never in prose",
   "labelled_by": "hand",
   "labelled_date": "2026-08-01",
-
   "extraction_notes": [
-    "Text layer extracted cleanly apart from page-number fusion: '1EDUCATION' and a trailing bare '2'.",
-    "'improving user experience by 30' — the '%' is lost in extraction. Harmless here but shows the text layer is lossy.",
-    "Field paths are unverified against the deconstructor. locator_mode is 'document' until reconciled; then re-pin to 'field'."
+    "CORRECTED: an earlier note claimed the '%' in 'improving user experience by 30' is lost in extraction. There is no '%' glyph anywhere in either page's content stream; the source PDF never contained it.",
+    "CORRECTED: an earlier note recorded page-number fusion as '1EDUCATION'. That was true of default-mode extraction. The loader now uses layout mode with a column rule, and the page number sits on its own line.",
+    "Document metadata carries only /Creator and /Producer - no PII. The other two PDFs are not like this."
   ],
-
   "spans": [
     {
-      "id": "jd-001", "type": "PERSON", "value": "JOHN DOE",
-      "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
+      "id": "jd-001",
+      "type": "PERSON",
+      "value": "JOHN DOE",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
       "note": "ALL CAPS. spaCy NER degrades noticeably on fully-capitalised names — casing is a feature it relies on. If tier 0 (structural field lookup) fails and this falls through to NER, expect a miss. Good early signal for whether the header is being caught structurally or by luck."
     },
     {
-      "id": "jd-002", "type": "ADDRESS", "value": "123 Main St, Anywhere, USA",
-      "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
-      "note": "Longest-match: contains jd-003's string. Must be resolved before counting LOCATION occurrences."
+      "id": "jd-002",
+      "type": "ADDRESS",
+      "value": "123 Main St, Anywhere, USA",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Longest-match: contains occurrence 1 of 'Anywhere, USA' (jd-010). CORRECTED: the previous note said this span contains jd-003's string; jd-003 is the phone number."
     },
     {
-      "id": "jd-003", "type": "PHONE", "value": "(123) 456-7890",
-      "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
+      "id": "jd-003",
+      "type": "PHONE",
+      "value": "(123) 456-7890",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
       "note": "Canonical US format. Should be a tier-1 regex certainty."
     },
     {
-      "id": "jd-004", "type": "EMAIL", "value": "john.doe@email.com",
-      "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress"
+      "id": "jd-004",
+      "type": "EMAIL",
+      "value": "john.doe@email.com",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress"
     },
     {
-      "id": "jd-005", "type": "URL", "value": "linkedin.com/in/johndoe",
-      "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress",
+      "id": "jd-005",
+      "type": "URL",
+      "value": "linkedin.com/in/johndoe",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 1,
+      "expected": "suppress",
       "note": "NO SCHEME. A URL regex anchored on 'https?://' misses this completely. Very common in resumes — people paste the display form. Test explicitly."
     },
     {
-      "id": "jd-006", "type": "URL", "value": "github.com/johndoe",
-      "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress",
+      "id": "jd-006",
+      "type": "URL",
+      "value": "github.com/johndoe",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 1,
+      "expected": "suppress",
       "note": "Also schemeless. Note 'GitHub' appears separately in the SKILLS list as a technology — see negative_controls. Same token, different meaning, one is PII-adjacent and one is not."
     },
     {
-      "id": "jd-007", "type": "DERIVATIVE", "value": "johndoe",
-      "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress",
+      "id": "jd-007",
+      "type": "DERIVATIVE",
+      "value": "johndoe",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "derived",
+      "phase": 1,
+      "expected": "suppress",
       "note": "Inside jd-005. The candidate's name, minus the space, lowercased. Neither NER nor a name-string tokenizer will match it against 'JOHN DOE'. Only caught as a side effect of suppressing the whole URL. This is the argument for suppressing URL fields wholesale rather than scanning their contents."
     },
     {
-      "id": "jd-008", "type": "DERIVATIVE", "value": "johndoe",
-      "field": null, "occurrence": 2,
-      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress",
+      "id": "jd-008",
+      "type": "DERIVATIVE",
+      "value": "johndoe",
+      "field": null,
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "derived",
+      "phase": 1,
+      "expected": "suppress",
       "note": "Inside jd-006."
     },
     {
-      "id": "jd-009", "type": "DERIVATIVE", "value": "john.doe",
-      "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress",
+      "id": "jd-009",
+      "type": "DERIVATIVE",
+      "value": "john.doe",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "derived",
+      "phase": 1,
+      "expected": "suppress",
       "note": "Email local part. Recovers the full name including the word boundary."
     },
     {
-      "id": "jd-010", "type": "LOCATION", "value": "Anywhere, USA",
-      "field": null, "occurrence": 2,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
+      "id": "jd-010",
+      "type": "LOCATION",
+      "value": "Anywhere, USA",
+      "field": null,
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize",
       "note": "Occurrence 2 of 4 in document order; occurrence 1 is nested inside jd-002 and must be consumed by longest-match first. This one sits in the WORK EXPERIENCE line for ABC Company."
     },
     {
-      "id": "jd-011", "type": "LOCATION", "value": "Anywhere, USA",
-      "field": null, "occurrence": 3,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
+      "id": "jd-011",
+      "type": "LOCATION",
+      "value": "Anywhere, USA",
+      "field": null,
+      "occurrence": 3,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize",
       "note": "XYZ Solutions line."
     },
     {
-      "id": "jd-012", "type": "LOCATION", "value": "Anywhere, USA",
-      "field": null, "occurrence": 4,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
+      "id": "jd-012",
+      "type": "LOCATION",
+      "value": "Anywhere, USA",
+      "field": null,
+      "occurrence": 4,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize",
       "note": "EDUCATION line. Note the preceding text is '1EDUCATION' — a fused page number. If the deconstructor section-splits on the literal 'EDUCATION' header it may fail here, orphaning this line into the wrong section. Worth watching independently of the PII question."
     },
     {
-      "id": "jd-013", "type": "ORG", "value": "ABC Company, Inc.",
-      "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass"
+      "id": "jd-013",
+      "type": "ORG",
+      "value": "ABC Company, Inc.",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
     },
     {
-      "id": "jd-014", "type": "ORG", "value": "XYZ Solutions",
-      "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass"
+      "id": "jd-014",
+      "type": "ORG",
+      "value": "XYZ Solutions",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
     },
     {
-      "id": "jd-015", "type": "ORG", "value": "State University",
-      "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass",
+      "id": "jd-015",
+      "type": "ORG",
+      "value": "State University",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass",
       "note": "NER may classify this as ORG or as LOCATION depending on context words. If it lands as LOCATION it will be tokenized in phase 1 — a false positive that degrades the education section of the output. Watch for it."
+    },
+    {
+      "id": "jd-016",
+      "type": "DATE",
+      "value": "June 2018",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Employment/award date. A quasi-identifier when paired with an employer (Addendum A.3)."
+    },
+    {
+      "id": "jd-017",
+      "type": "DATE",
+      "value": "July 2016",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "jd-018",
+      "type": "DATE",
+      "value": "June 2018",
+      "field": null,
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "jd-019",
+      "type": "DATE",
+      "value": "May 2016",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
     }
   ],
-
   "negative_controls": [
-    { "value": "Angular",     "note": "Product name. Also a common English adjective — high false-positive risk." },
-    { "value": "Spring Boot", "note": "Two capitalised words, no context cue. Classic NER false ORG/PERSON." },
-    { "value": "Hibernate",   "note": "Capitalised verb." },
-    { "value": "Mockito",     "note": "Reads as a surname." },
-    { "value": "Junit",       "note": "Reads as a given name — 'Junit' is one character from 'Juniit'/'Junito'. Genuine PERSON risk." },
-    { "value": "Bootstrap",   "note": "Capitalised common noun." },
-    { "value": "Docker",      "note": "Reads as an occupational surname." },
-    { "value": "Scrum",       "note": "" },
-    { "value": "GitHub",      "note": "Appears in SKILLS as a technology, distinct from jd-006's URL. Must not be suppressed there or the skills section loses content." },
-    { "value": "Oracle Certified Professional, Java SE 8 Programmer", "note": "Certification title. Contains 'Oracle' (ORG) and looks credential-ish." },
-    { "value": "Java",        "note": "Also an Indonesian island — LOCATION false-positive risk. If tokenized, every skills mention becomes ⟪LOC_n⟫ and the resume is destroyed. Highest-value negative control in this document." }
+    {
+      "value": "Angular",
+      "note": "Product name. Also a common English adjective — high false-positive risk."
+    },
+    {
+      "value": "Spring Boot",
+      "note": "Two capitalised words, no context cue. Classic NER false ORG/PERSON."
+    },
+    {
+      "value": "Hibernate",
+      "note": "Capitalised verb."
+    },
+    {
+      "value": "Mockito",
+      "note": "Reads as a surname."
+    },
+    {
+      "value": "Junit",
+      "note": "Reads as a given name — 'Junit' is one character from 'Juniit'/'Junito'. Genuine PERSON risk."
+    },
+    {
+      "value": "Bootstrap",
+      "note": "Capitalised common noun."
+    },
+    {
+      "value": "Docker",
+      "note": "Reads as an occupational surname."
+    },
+    {
+      "value": "Scrum",
+      "note": ""
+    },
+    {
+      "value": "GitHub",
+      "note": "Appears in SKILLS as a technology, distinct from jd-006's URL. Must not be suppressed there or the skills section loses content."
+    },
+    {
+      "value": "Oracle Certified Professional, Java SE 8 Programmer",
+      "note": "Certification title. Contains 'Oracle' (ORG) and looks credential-ish."
+    },
+    {
+      "value": "Java",
+      "note": "Also an Indonesian island — LOCATION false-positive risk. If tokenized, every skills mention becomes ⟪LOC_n⟫ and the resume is destroyed. Highest-value negative control in this document."
+    }
   ],
-
   "known_traps": [
     "ALL-CAPS name (jd-001) — tests whether the header is caught structurally or is quietly relying on NER.",
     "Schemeless URLs (jd-005, jd-006) — the single most likely tier-1 regex gap.",
@@ -125,9 +289,51 @@
     "'Java' as a negative control — a LOCATION false positive here would be catastrophic and obvious, which makes it a good canary for over-tokenization.",
     "Nested LOCATION inside ADDRESS — tests the harness's longest-match-first overlap rule, not the detector."
   ],
-
   "expected_phase1_counts": {
     "total_spans": 12,
-    "by_context": { "structured": 4, "url": 2, "derived": 3, "prose": 3 }
+    "by_context": {
+      "structured": 4,
+      "url": 2,
+      "derived": 3,
+      "prose": 3
+    },
+    "by_subject": {
+      "candidate": 12
+    },
+    "by_type": {
+      "PERSON": 1,
+      "ADDRESS": 1,
+      "PHONE": 1,
+      "EMAIL": 1,
+      "URL": 2,
+      "DERIVATIVE": 3,
+      "LOCATION": 3
+    }
+  },
+  "substrate": {
+    "produced_by": "blackjet.loader._load_pdf",
+    "form": "layout-mode extraction, icon-font runs removed, column padding collapsed, [PDF METADATA] block appended",
+    "note": "locator_mode is 'document'; occurrence indices resolve against this text. A label file for a PDF is meaningless without naming its substrate."
+  },
+  "phase2_disposition": {
+    "status": "open",
+    "current": "pass",
+    "question": "Should employer and institution names, their URLs and employment dates be suppressed?",
+    "for_suppress": "Employer + role + dates + location re-identifies without a name (defects-v2 3.4, Addendum A.3).",
+    "against_suppress": "Org identity carries downstream signal a consumer may need - a job-board matcher requires the current employer in order not to match a candidate to the firm already employing them.",
+    "note": "Applies corpus-wide. Every phase-2 span in this file carries 'pass' pending this decision."
+  },
+  "expected_phase2_counts": {
+    "total_spans": 7,
+    "by_context": {
+      "prose": 7
+    },
+    "by_subject": {
+      "candidate": 7
+    },
+    "by_type": {
+      "ORG": 3,
+      "DATE": 4
+    }
   }
 }

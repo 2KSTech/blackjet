@@ -4,114 +4,937 @@
   "source_file": "thomasdavis.json",
   "source_format": "jsonresume",
   "locator_mode": "field",
-  "corpus_role": "stress case — non-US phone format, four third parties, eleven in-prose name hits, non-name persistent identifier",
+  "corpus_role": "stress case — non-US phone format, four third parties, ten in-prose name hits, non-name persistent identifier",
   "labelled_by": "hand",
   "labelled_date": "2026-08-01",
-
   "extraction_notes": [
-    "Real published resume (JSON Resume project author's own). Included because its reference section is far denser than a synthesized one would naturally be — worth keeping for that reason, but note it is real data.",
-    "basics.website and basics.url are duplicates. Both must be suppressed; a suppressor keyed only on 'url' misses 'website'."
+    "Real published resume (JSON Resume project author's own), included by permission. Its reference section is far denser than a synthesized one.",
+    "basics.website and basics.url are duplicates. Both must be suppressed; a suppressor keyed only on 'url' misses 'website'.",
+    "CORRECTED: by_context declared structured 10 / prose 11 against an actual 11 / 10, and by_subject declared candidate 23 / third_party 5 against an actual 24 / 4. total_spans was right, which is why both survived review.",
+    "CORRECTED: the trap notes claimed eleven in-prose 'Thomas' hits. There are nine bare hits across three fields, plus one full 'Thomas Davis'.",
+    "ADDED: the phase-2 section this file previously lacked (defects-v2 3.5). Its negative_controls annotated 'Earbits' and 'Nerdwallet' as 'ORG, phase 2' while no phase-2 span existed."
   ],
-
   "spans": [
-    { "id": "td-001", "type": "PERSON", "value": "Thomas Davis", "field": "basics.name", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
-    { "id": "td-002", "type": "PHONE", "value": "041102102", "field": "basics.phone", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
-      "note": "HIGHEST-VALUE TRAP IN THE CORPUS. Australian mobile, nine digits, no separators, no country code, no parentheses. Every US-shaped phone regex misses this and returns a clean pass. It looks like an ID number or a product code. If the POC reports 1.00 phone recall without this document in the set, the number is meaningless." },
-    { "id": "td-003", "type": "EMAIL", "value": "thomasalwyndavis@gmail.com", "field": "basics.email", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
-      "note": "Local part contains the full name plus a middle name not present anywhere else in the document. Suppressing the email is the only way this middle name stays private." },
-    { "id": "td-004", "type": "URL", "value": "https://lordajax.com", "field": "basics.website", "occurrence": 1,
-      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress",
-      "note": "Pseudonymous domain — contains no name, so a name-derivative check finds nothing. Still a direct, resolvable link to the individual. Argues for suppressing URL fields by field identity rather than by content inspection." },
-    { "id": "td-005", "type": "URL", "value": "https://lordajax.com", "field": "basics.url", "occurrence": 1,
-      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress",
-      "note": "Duplicate of td-004 under a different key." },
-    { "id": "td-006", "type": "IDENTIFIER", "value": "https://avatars0.githubusercontent.com/u/416209?s=460&u=38f220a2c9c658141804f881c334c594eb1642ac&v=4", "field": "basics.image", "occurrence": 1,
-      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress",
-      "note": "GitHub user ID 416209 embedded in the path — a stable, unique, externally-resolvable identifier for one specific person. No name, no NER entity, no PII-shaped regex will fire. Also an image of the person's face if fetched. Easily the most-overlooked span in the whole corpus. Policy line needed: avatar and image URLs suppressed by default." },
-    { "id": "td-007", "type": "LOCATION", "value": "Melbourne", "field": "basics.location.city", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
-    { "id": "td-008", "type": "HANDLE", "value": "ajaxdavis", "field": "basics.profiles[0].username", "occurrence": 1,
-      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress",
-      "note": "Partial derivative — surname only, fused to a pseudonym. Half-matches the real name." },
-    { "id": "td-009", "type": "URL", "value": "https://twitter.com/ajaxdavis", "field": "basics.profiles[0].url", "occurrence": 1,
-      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress" },
-    { "id": "td-010", "type": "URL", "value": "https://github.com/thomasdavis", "field": "basics.profiles[1].url", "occurrence": 1,
-      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress" },
-    { "id": "td-011", "type": "HANDLE", "value": "thomasdavis", "field": "basics.profiles[1].username", "occurrence": 1,
-      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress",
-      "note": "Full name, despaced and lowercased." },
-
-    { "id": "td-012", "type": "PERSON", "value": "Joey Flores", "field": "references[0].name", "occurrence": 1,
-      "subject": "third_party", "context": "structured", "phase": 1, "expected": "suppress",
-      "note": "Field value is 'Joey Flores, Co-founder and CEO of Earbits, Inc.' — name, title and employer packed into one string. NER should return the PERSON span only; the harness must decide whether suppressing the whole field counts as a TP. Recommend: suppress the whole field, score as TP." },
-    { "id": "td-013", "type": "PERSON", "value": "Thomas", "field": "references[0].reference", "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "td-014", "type": "PERSON", "value": "Thomas", "field": "references[0].reference", "occurrence": 2,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "td-015", "type": "PERSON", "value": "Thomas", "field": "references[0].reference", "occurrence": 3,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
-      "note": "Three hits in one field. Entity-consistent tokenization means all three become the same token — good test that the tokenizer is consistent within a field, not just across fields." },
-    { "id": "td-016", "type": "PERSON", "value": "Yotam Rosenbaum", "field": "references[1].name", "occurrence": 1,
-      "subject": "third_party", "context": "structured", "phase": 1, "expected": "suppress",
-      "note": "Non-Anglo given name. Direct test of the English-centric NER weakness noted in spec §8." },
-    { "id": "td-017", "type": "PERSON", "value": "Thomas", "field": "references[1].reference", "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "td-018", "type": "PERSON", "value": "Thomas", "field": "references[1].reference", "occurrence": 2,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "td-019", "type": "PERSON", "value": "Ryan Kirkman", "field": "references[2].name", "occurrence": 1,
-      "subject": "third_party", "context": "structured", "phase": 1, "expected": "suppress" },
-    { "id": "td-020", "type": "PERSON", "value": "Thomas", "field": "references[2].reference", "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "td-021", "type": "PERSON", "value": "Thomas", "field": "references[2].reference", "occurrence": 2,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "td-022", "type": "PERSON", "value": "Thomas", "field": "references[2].reference", "occurrence": 3,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "td-023", "type": "PERSON", "value": "Thomas", "field": "references[2].reference", "occurrence": 4,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "td-024", "type": "PERSON", "value": "Greg Davis", "field": "references[3].name", "occurrence": 1,
-      "subject": "third_party", "context": "structured", "phase": 1, "expected": "suppress",
-      "note": "Shares the candidate's surname. Possible relative. Even fully tokenized, the shared surname is a re-identification hint that survives — a small, concrete illustration of the quasi-identifier problem." },
-    { "id": "td-025", "type": "PERSON", "value": "Thomas Davis", "field": "references[3].reference", "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
-      "note": "FULL name in prose, not just given name. Must resolve longest-match-first or the tokenizer will match 'Thomas' and leave 'Davis' stranded — producing '⟪PERSON_01⟫ Davis' in the output, which leaks the surname while looking like it worked. This exact failure is why the overlap rule matters." },
-
-    { "id": "td-026", "type": "LOCATION", "value": "Melbourne", "field": "work[0].location", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "tokenize" },
-    { "id": "td-027", "type": "LOCATION", "value": "Melbourne", "field": "work[1].location", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "tokenize" },
-    { "id": "td-028", "type": "LOCATION", "value": "Melbourne", "field": "work[2].location", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "tokenize" }
+    {
+      "id": "td-001",
+      "type": "PERSON",
+      "value": "Thomas Davis",
+      "field": "basics.name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "td-002",
+      "type": "PHONE",
+      "value": "041102102",
+      "field": "basics.phone",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "HIGHEST-VALUE TRAP IN THE CORPUS. Australian mobile, nine digits, no separators, no country code, no parentheses. Every US-shaped phone regex misses this and returns a clean pass. It looks like an ID number or a product code. If the POC reports 1.00 phone recall without this document in the set, the number is meaningless."
+    },
+    {
+      "id": "td-003",
+      "type": "EMAIL",
+      "value": "thomasalwyndavis@gmail.com",
+      "field": "basics.email",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Local part contains the full name plus a middle name not present anywhere else in the document. Suppressing the email is the only way this middle name stays private."
+    },
+    {
+      "id": "td-004",
+      "type": "URL",
+      "value": "https://lordajax.com",
+      "field": "basics.website",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Pseudonymous domain — contains no name, so a name-derivative check finds nothing. Still a direct, resolvable link to the individual. Argues for suppressing URL fields by field identity rather than by content inspection."
+    },
+    {
+      "id": "td-005",
+      "type": "URL",
+      "value": "https://lordajax.com",
+      "field": "basics.url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Duplicate of td-004 under a different key."
+    },
+    {
+      "id": "td-006",
+      "type": "IDENTIFIER",
+      "value": "https://avatars0.githubusercontent.com/u/416209?s=460&u=38f220a2c9c658141804f881c334c594eb1642ac&v=4",
+      "field": "basics.image",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "GitHub user ID 416209 embedded in the path — a stable, unique, externally-resolvable identifier for one specific person. No name, no NER entity, no PII-shaped regex will fire. Also an image of the person's face if fetched. Easily the most-overlooked span in the whole corpus. Policy line needed: avatar and image URLs suppressed by default."
+    },
+    {
+      "id": "td-007",
+      "type": "LOCATION",
+      "value": "Melbourne",
+      "field": "basics.location.city",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "td-008",
+      "type": "HANDLE",
+      "value": "ajaxdavis",
+      "field": "basics.profiles[0].username",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "derived",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Partial derivative — surname only, fused to a pseudonym. Half-matches the real name."
+    },
+    {
+      "id": "td-009",
+      "type": "URL",
+      "value": "https://twitter.com/ajaxdavis",
+      "field": "basics.profiles[0].url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "td-010",
+      "type": "URL",
+      "value": "https://github.com/thomasdavis",
+      "field": "basics.profiles[1].url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "td-011",
+      "type": "HANDLE",
+      "value": "thomasdavis",
+      "field": "basics.profiles[1].username",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "derived",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Full name, despaced and lowercased."
+    },
+    {
+      "id": "td-012",
+      "type": "PERSON",
+      "value": "Joey Flores",
+      "field": "references[0].name",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Field value is 'Joey Flores, Co-founder and CEO of Earbits, Inc.' — name, title and employer packed into one string. NER should return the PERSON span only; the harness must decide whether suppressing the whole field counts as a TP. Recommend: suppress the whole field, score as TP."
+    },
+    {
+      "id": "td-013",
+      "type": "PERSON",
+      "value": "Thomas",
+      "field": "references[0].reference",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "td-014",
+      "type": "PERSON",
+      "value": "Thomas",
+      "field": "references[0].reference",
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "td-015",
+      "type": "PERSON",
+      "value": "Thomas",
+      "field": "references[0].reference",
+      "occurrence": 3,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize",
+      "note": "Three hits in one field. Entity-consistent tokenization means all three become the same token — good test that the tokenizer is consistent within a field, not just across fields."
+    },
+    {
+      "id": "td-016",
+      "type": "PERSON",
+      "value": "Yotam Rosenbaum",
+      "field": "references[1].name",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Non-Anglo given name. Direct test of the English-centric NER weakness noted in spec §8."
+    },
+    {
+      "id": "td-017",
+      "type": "PERSON",
+      "value": "Thomas",
+      "field": "references[1].reference",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "td-018",
+      "type": "PERSON",
+      "value": "Thomas",
+      "field": "references[1].reference",
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "td-019",
+      "type": "PERSON",
+      "value": "Ryan Kirkman",
+      "field": "references[2].name",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "td-020",
+      "type": "PERSON",
+      "value": "Thomas",
+      "field": "references[2].reference",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "td-021",
+      "type": "PERSON",
+      "value": "Thomas",
+      "field": "references[2].reference",
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "td-022",
+      "type": "PERSON",
+      "value": "Thomas",
+      "field": "references[2].reference",
+      "occurrence": 3,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "td-023",
+      "type": "PERSON",
+      "value": "Thomas",
+      "field": "references[2].reference",
+      "occurrence": 4,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "td-024",
+      "type": "PERSON",
+      "value": "Greg Davis",
+      "field": "references[3].name",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Shares the candidate's surname. Possible relative. Even fully tokenized, the shared surname is a re-identification hint that survives — a small, concrete illustration of the quasi-identifier problem."
+    },
+    {
+      "id": "td-025",
+      "type": "PERSON",
+      "value": "Thomas Davis",
+      "field": "references[3].reference",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize",
+      "note": "FULL name in prose, not just given name. Must resolve longest-match-first or the tokenizer will match 'Thomas' and leave 'Davis' stranded — producing '⟪PERSON_01⟫ Davis' in the output, which leaks the surname while looking like it worked. This exact failure is why the overlap rule matters."
+    },
+    {
+      "id": "td-026",
+      "type": "LOCATION",
+      "value": "Melbourne",
+      "field": "work[0].location",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "td-027",
+      "type": "LOCATION",
+      "value": "Melbourne",
+      "field": "work[1].location",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "td-028",
+      "type": "LOCATION",
+      "value": "Melbourne",
+      "field": "work[2].location",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "td-029",
+      "type": "ORG",
+      "value": "Earbits",
+      "field": "references[0].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Also in references[0].reference and references[1].reference."
+    },
+    {
+      "id": "td-030",
+      "type": "ORG",
+      "value": "Earbits",
+      "field": "references[1].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-031",
+      "type": "ORG",
+      "value": "Nerdwallet",
+      "field": "references[2].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-032",
+      "type": "ORG",
+      "value": "The University of Queensland",
+      "field": "education[0].institution",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-033",
+      "type": "ORG",
+      "value": "Fight For The Future",
+      "field": "awards[0].awarder",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-034",
+      "type": "ORG",
+      "value": "Misc Companies",
+      "field": "work[0].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Not a real employer name; labelled for completeness of the work[].name series."
+    },
+    {
+      "id": "td-035",
+      "type": "ORG",
+      "value": "Tokenized 2",
+      "field": "work[1].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-036",
+      "type": "ORG",
+      "value": "Blockbid",
+      "field": "work[2].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-037",
+      "type": "ORG",
+      "value": "Listium",
+      "field": "work[3].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-038",
+      "type": "ORG",
+      "value": "Electronic Frontier Foundation",
+      "field": "work[4].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-039",
+      "type": "ORG",
+      "value": "Earbits",
+      "field": "work[5].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-040",
+      "type": "ORG",
+      "value": "JSON Resume",
+      "field": "work[6].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-041",
+      "type": "ORG",
+      "value": "Taskforce.is",
+      "field": "work[7].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-042",
+      "type": "ORG",
+      "value": "Drone Hire",
+      "field": "work[8].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-043",
+      "type": "ORG",
+      "value": "BackboneTutorials.com",
+      "field": "work[9].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-044",
+      "type": "ORG",
+      "value": "Ephox",
+      "field": "work[10].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-045",
+      "type": "ORG",
+      "value": "JSON Resume",
+      "field": "projects[0].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-046",
+      "type": "ORG",
+      "value": "Cdnjs",
+      "field": "projects[1].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-047",
+      "type": "DATE",
+      "value": "2014-10-02",
+      "field": "awards[0].date",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-048",
+      "type": "DATE",
+      "value": "2009-12-12",
+      "field": "education[0].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Employment/award date. Formerly deleted by _JSON_SKIP_KEYS before detection ever ran (Addendum A)."
+    },
+    {
+      "id": "td-049",
+      "type": "DATE",
+      "value": "2008-02-12",
+      "field": "education[0].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-050",
+      "type": "DATE",
+      "value": "2014-04-01",
+      "field": "projects[0].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-051",
+      "type": "DATE",
+      "value": "2011-01-08",
+      "field": "projects[1].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-052",
+      "type": "DATE",
+      "value": "2020-05-05",
+      "field": "work[0].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-053",
+      "type": "DATE",
+      "value": "2012-06-01",
+      "field": "work[10].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-054",
+      "type": "DATE",
+      "value": "2011-01-01",
+      "field": "work[10].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-055",
+      "type": "DATE",
+      "value": "2021-05-05",
+      "field": "work[1].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-056",
+      "type": "DATE",
+      "value": "2020-05-05",
+      "field": "work[1].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-057",
+      "type": "DATE",
+      "value": "2020-01-01",
+      "field": "work[2].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-058",
+      "type": "DATE",
+      "value": "2018-03-01",
+      "field": "work[2].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-059",
+      "type": "DATE",
+      "value": "2018-01-01",
+      "field": "work[3].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-060",
+      "type": "DATE",
+      "value": "2016-01-01",
+      "field": "work[3].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-061",
+      "type": "DATE",
+      "value": "2016-01-01",
+      "field": "work[4].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-062",
+      "type": "DATE",
+      "value": "2014-04-01",
+      "field": "work[4].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-063",
+      "type": "DATE",
+      "value": "2015-01-09",
+      "field": "work[5].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-064",
+      "type": "DATE",
+      "value": "2013-03-08",
+      "field": "work[5].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-065",
+      "type": "DATE",
+      "value": "2014-04-01",
+      "field": "work[6].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-066",
+      "type": "DATE",
+      "value": "2016-01-01",
+      "field": "work[7].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-067",
+      "type": "DATE",
+      "value": "2013-06-01",
+      "field": "work[7].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-068",
+      "type": "DATE",
+      "value": "2013-01-01",
+      "field": "work[8].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-069",
+      "type": "DATE",
+      "value": "2014-01-01",
+      "field": "work[9].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-070",
+      "type": "DATE",
+      "value": "2011-01-01",
+      "field": "work[9].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "td-071",
+      "type": "SELF_ASSESSMENT",
+      "value": "Senior",
+      "field": "skills[0].level",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Addendum A.3: a self-assessment, not schema scaffolding. Formerly deleted. Exposure is not the defect; deletion was."
+    },
+    {
+      "id": "td-072",
+      "type": "SELF_ASSESSMENT",
+      "value": "Senior",
+      "field": "skills[1].level",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Addendum A.3: a self-assessment, not schema scaffolding. Formerly deleted. Exposure is not the defect; deletion was."
+    },
+    {
+      "id": "td-073",
+      "type": "SELF_ASSESSMENT",
+      "value": "Senior",
+      "field": "skills[2].level",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Addendum A.3: a self-assessment, not schema scaffolding. Formerly deleted. Exposure is not the defect; deletion was."
+    }
   ],
-
   "negative_controls": [
-    { "value": "Redux",    "note": "" },
-    { "value": "Apollo",   "note": "Greek deity / NASA programme / GraphQL client. Strong LOCATION-or-PERSON false-positive risk." },
-    { "value": "Heroku",   "note": "Invented word that reads like a Japanese place name." },
-    { "value": "Fastly",   "note": "Reads as an adverb." },
-    { "value": "Backbone.js", "note": "" },
-    { "value": "Laravel",  "note": "Reads as a French surname." },
-    { "value": "Melbourne", "note": "CONTRAST CASE — as a LOCATION it is a true positive (td-007, td-026..028). Listed here only to flag that the same string is correctly flagged everywhere it appears in this document. Do not use as a negative control; included to prevent mislabelling." },
-    { "value": "Earbits",  "note": "ORG, phase 2." },
-    { "value": "Nerdwallet", "note": "ORG, phase 2." },
-    { "value": "Defender of the Internet", "note": "Award title, sentence-shaped." }
+    {
+      "value": "Redux",
+      "note": ""
+    },
+    {
+      "value": "Apollo",
+      "note": "Greek deity / NASA programme / GraphQL client. Strong LOCATION-or-PERSON false-positive risk."
+    },
+    {
+      "value": "Heroku",
+      "note": "Invented word that reads like a Japanese place name."
+    },
+    {
+      "value": "Fastly",
+      "note": "Reads as an adverb."
+    },
+    {
+      "value": "Backbone.js",
+      "note": ""
+    },
+    {
+      "value": "Laravel",
+      "note": "Reads as a French surname."
+    },
+    {
+      "value": "Melbourne",
+      "note": "CONTRAST CASE — as a LOCATION it is a true positive (td-007, td-026..028). Listed here only to flag that the same string is correctly flagged everywhere it appears in this document. Do not use as a negative control; included to prevent mislabelling."
+    },
+    {
+      "value": "Earbits",
+      "note": "ORG, phase 2."
+    },
+    {
+      "value": "Nerdwallet",
+      "note": "ORG, phase 2."
+    },
+    {
+      "value": "Defender of the Internet",
+      "note": "Award title, sentence-shaped."
+    }
   ],
-
   "known_traps": [
     "td-002 — AU phone with no separators. The single most likely silent failure in the whole corpus.",
     "td-006 — GitHub avatar URL carrying a numeric user ID. No name, no entity, no regex. Tests whether image/avatar fields are in the suppression policy at all.",
-    "td-025 — full name in prose overlapping eleven given-name-only hits. Tests longest-match-first; failure produces '⟪PERSON_01⟫ Davis'.",
-    "Eleven in-prose 'Thomas' hits across four fields — by far the densest prose-name test available.",
+    "td-025 — full name in prose overlapping nine given-name-only hits. Tests longest-match-first; failure produces '⟪PERSON_01⟫ Davis'.",
+    "Ten in-prose name hits: nine bare 'Thomas' across references[0..2].reference, plus one full 'Thomas Davis' in references[3].reference — by far the densest prose-name test available.",
     "Four third-party individuals with names, titles and employers in references[].",
     "td-016 'Yotam Rosenbaum' — non-Anglo given name, direct test of the documented NER weakness.",
     "basics.website and basics.url duplicate the same value under different keys — tests whether suppression is keyed on a field allow-list or a hardcoded key name."
   ],
-
   "expected_phase1_counts": {
     "total_spans": 28,
-    "by_context": { "structured": 10, "url": 5, "derived": 2, "prose": 11 },
-    "by_subject": { "candidate": 23, "third_party": 5 }
+    "by_context": {
+      "structured": 11,
+      "url": 5,
+      "derived": 2,
+      "prose": 10
+    },
+    "by_subject": {
+      "candidate": 24,
+      "third_party": 4
+    },
+    "by_type": {
+      "PERSON": 15,
+      "PHONE": 1,
+      "EMAIL": 1,
+      "URL": 4,
+      "IDENTIFIER": 1,
+      "LOCATION": 4,
+      "HANDLE": 2
+    }
+  },
+  "substrate": {
+    "produced_by": "blackjet.loader._load_json_resume",
+    "form": "the source JSON, re-serialized with two-space indent",
+    "note": "locator_mode is 'field'; every span's field path resolves against loader.ValueSpan.path. Values are no longer flattened to 'path: value' lines, so no detection can straddle a record boundary."
+  },
+  "phase2_disposition": {
+    "status": "open",
+    "current": "pass",
+    "question": "Should employer and institution names, their URLs, employment dates and GPA be suppressed?",
+    "for_suppress": "Employer + role + dates + location re-identifies without a name (defects-v2 3.4, Addendum A.3).",
+    "against_suppress": "Org identity carries downstream signal a consumer may need - a job-board matcher requires the current employer in order not to match a candidate to the firm already employing them.",
+    "note": "Applies corpus-wide. Every phase-2 span in this file carries 'pass' pending this decision."
+  },
+  "expected_phase2_counts": {
+    "total_spans": 45,
+    "by_context": {
+      "structured": 45
+    },
+    "by_subject": {
+      "candidate": 45
+    },
+    "by_type": {
+      "ORG": 18,
+      "DATE": 24,
+      "SELF_ASSESSMENT": 3
+    }
   }
 }

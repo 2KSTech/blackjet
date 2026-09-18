@@ -7,90 +7,488 @@
   "corpus_role": "extraction stress — icon-font glyph corruption lands on every contact field; heavy ORG false-positive surface",
   "labelled_by": "hand",
   "labelled_date": "2026-08-01",
-
   "extraction_notes": [
-    "This resume uses an icon font (FontAwesome or similar) for contact-line markers. Every icon extracts as a junk character, and every one is adjacent to a PII field. This is the single most realistic extraction-failure document in the corpus — LaTeX/Overleaf resume templates do this constantly.",
-    "'I (123) 456-7890' — leading 'I' is a corrupted phone icon.",
-    "'# alfred.pennyworth@email.com' — leading '#' is a corrupted envelope icon.",
-    "'ð apennyworth' — corrupted LinkedIn icon.",
-    "'§ apennyworth' — corrupted GitHub icon.",
-    "'1/22020 – Present' — page-number '1/2' fused to the year '2020'.",
-    "Trailing '2/2' page marker at end of document."
+    "The '♂¶obile-alt' / '/linkedin-in' / '/github' artifacts are NOT extraction damage. Those runs are drawn in FontAwesome5Free-Solid, FontAwesome5Free-Regular and FontAwesome5Brands-Regular - separate runs in separate fonts, concatenated into one text stream. '/linkedin-in' is the icon's glyph name. No extraction mode fixes it; removing the icon fonts yields ap-003, ap-004, ap-006 and ap-007 intact.",
+    "ap-006 / ap-007 'apennyworth' are caught by the derivative pass (detect.derivative_findings), seeded from the detected PERSON. Neither NER nor a string match against the full name can find them.",
+    "Document metadata carries the candidate's name in /Author, /Title, /Subject and /Keywords."
   ],
-
   "spans": [
-    { "id": "ap-001", "type": "PERSON", "value": "Alfred Pennyworth", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
-    { "id": "ap-002", "type": "LOCATION", "value": "Silicon Valley, CA, USA", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
-      "note": "'Silicon Valley' is a colloquial region, not an administrative place. Gazetteer-backed recognizers may miss it while catching 'CA, USA'. Partial match — decide scoring." },
-    { "id": "ap-003", "type": "PHONE", "value": "(123) 456-7890", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
-      "note": "Preceded by a stray 'I' glyph with a space. Regex should still match the number itself; the risk is upstream — if the deconstructor treats 'I (123) 456-7890' as a non-contact field because it fails a format check, the whole line may be routed to free text instead of the contact block, bypassing tier 0." },
-    { "id": "ap-004", "type": "EMAIL", "value": "alfred.pennyworth@email.com", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress",
-      "note": "Preceded by '# '. A regex using a permissive local-part character class may capture '#' into the match; one anchored on a word boundary will not. Either way it must be suppressed — but if the harness compares matched strings exactly, a '#'-inclusive match scores as a miss against this label. Recommend scoring on span overlap, not string equality." },
-    { "id": "ap-005", "type": "DERIVATIVE", "value": "alfred.pennyworth", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress",
-      "note": "Email local part; recovers the full name." },
-    { "id": "ap-006", "type": "HANDLE", "value": "apennyworth", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress",
-      "note": "LinkedIn handle, prefixed by the corrupted 'ð' glyph. Bare handle with no URL and no label — nothing marks it as a social identifier except the glyph that failed to extract. Genuinely hard: there is no reliable signal left in the text. Expect a miss; this span exists to document that the icon-font case needs handling at the PDF layer, not the text layer." },
-    { "id": "ap-007", "type": "HANDLE", "value": "apennyworth", "field": null, "occurrence": 2,
-      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress",
-      "note": "GitHub handle, prefixed by '§'. Identical string to ap-006 — occurrence index is the only thing distinguishing them." },
-
-    { "id": "ap-008", "type": "LOCATION", "value": "Mountain View, CA, USA", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "ap-009", "type": "LOCATION", "value": "Seattle, WA, USA", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "ap-010", "type": "LOCATION", "value": "Cupertino, CA, USA", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "ap-011", "type": "LOCATION", "value": "Los Gatos, CA, USA", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "ap-012", "type": "LOCATION", "value": "Menlo Park, CA, USA", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "ap-013", "type": "LOCATION", "value": "Stanford, CA, USA", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
-      "note": "'Stanford' appears twice on this line — once as part of the institution name and once as the city. Nested/adjacent duplicate." },
-    { "id": "ap-014", "type": "LOCATION", "value": "Cambridge, MA, USA", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize" },
-    { "id": "ap-015", "type": "LOCATION", "value": "Berkeley, CA, USA", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
-      "note": "Same duplication as ap-013 — 'University of California, Berkeley, Berkeley, CA, USA'." },
-
-    { "id": "ap-016", "type": "ORG", "value": "Google", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass" },
-    { "id": "ap-017", "type": "ORG", "value": "Amazon", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass",
-      "note": "Also a river and a rainforest. LOCATION false-positive risk." },
-    { "id": "ap-018", "type": "ORG", "value": "Apple", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass" },
-    { "id": "ap-019", "type": "ORG", "value": "Netflix", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass" },
-    { "id": "ap-020", "type": "ORG", "value": "Facebook", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass" },
-    { "id": "ap-021", "type": "ORG", "value": "Stanford University", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass" },
-    { "id": "ap-022", "type": "ORG", "value": "Massachusetts Institute of Technology", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass",
-      "note": "Contains 'Massachusetts', a state. High risk of partial LOCATION extraction splitting the institution name." },
-    { "id": "ap-023", "type": "ORG", "value": "University of California, Berkeley", "field": null, "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 2, "expected": "pass",
-      "note": "Contains 'California' and 'Berkeley', both LOCATIONs. If phase-1 LOCATION tokenization fires inside the institution name, the education section renders as 'University of ⟪LOC_04⟫, ⟪LOC_09⟫' — visibly broken output. Best single illustration of why ORG/LOCATION boundary handling matters." }
+    {
+      "id": "ap-001",
+      "type": "PERSON",
+      "value": "Alfred Pennyworth",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "ap-002",
+      "type": "LOCATION",
+      "value": "Silicon Valley, CA, USA",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "'Silicon Valley' is a colloquial region, not an administrative place. Gazetteer-backed recognizers may miss it while catching 'CA, USA'. Partial match — decide scoring."
+    },
+    {
+      "id": "ap-003",
+      "type": "PHONE",
+      "value": "(123) 456-7890",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Preceded by a stray 'I' glyph with a space. Regex should still match the number itself; the risk is upstream — if the deconstructor treats 'I (123) 456-7890' as a non-contact field because it fails a format check, the whole line may be routed to free text instead of the contact block, bypassing tier 0."
+    },
+    {
+      "id": "ap-004",
+      "type": "EMAIL",
+      "value": "alfred.pennyworth@email.com",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Preceded by '# '. A regex using a permissive local-part character class may capture '#' into the match; one anchored on a word boundary will not. Either way it must be suppressed — but if the harness compares matched strings exactly, a '#'-inclusive match scores as a miss against this label. Recommend scoring on span overlap, not string equality."
+    },
+    {
+      "id": "ap-005",
+      "type": "DERIVATIVE",
+      "value": "alfred.pennyworth",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "derived",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Email local part; recovers the full name."
+    },
+    {
+      "id": "ap-006",
+      "type": "HANDLE",
+      "value": "apennyworth",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "derived",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "LinkedIn handle, prefixed by the corrupted 'ð' glyph. Bare handle with no URL and no label — nothing marks it as a social identifier except the glyph that failed to extract. Genuinely hard: there is no reliable signal left in the text. Expect a miss; this span exists to document that the icon-font case needs handling at the PDF layer, not the text layer."
+    },
+    {
+      "id": "ap-007",
+      "type": "HANDLE",
+      "value": "apennyworth",
+      "field": null,
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "derived",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "GitHub handle, prefixed by '§'. Identical string to ap-006 — occurrence index is the only thing distinguishing them."
+    },
+    {
+      "id": "ap-008",
+      "type": "LOCATION",
+      "value": "Mountain View, CA, USA",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "ap-009",
+      "type": "LOCATION",
+      "value": "Seattle, WA, USA",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "ap-010",
+      "type": "LOCATION",
+      "value": "Cupertino, CA, USA",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "ap-011",
+      "type": "LOCATION",
+      "value": "Los Gatos, CA, USA",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "ap-012",
+      "type": "LOCATION",
+      "value": "Menlo Park, CA, USA",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "ap-013",
+      "type": "LOCATION",
+      "value": "Stanford, CA, USA",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize",
+      "note": "'Stanford' appears twice on this line — once as part of the institution name and once as the city. Nested/adjacent duplicate."
+    },
+    {
+      "id": "ap-014",
+      "type": "LOCATION",
+      "value": "Cambridge, MA, USA",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize"
+    },
+    {
+      "id": "ap-015",
+      "type": "LOCATION",
+      "value": "Berkeley, CA, USA",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize",
+      "note": "Same duplication as ap-013 — 'University of California, Berkeley, Berkeley, CA, USA'."
+    },
+    {
+      "id": "ap-016",
+      "type": "ORG",
+      "value": "Google",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-017",
+      "type": "ORG",
+      "value": "Amazon",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Also a river and a rainforest. LOCATION false-positive risk."
+    },
+    {
+      "id": "ap-018",
+      "type": "ORG",
+      "value": "Apple",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-019",
+      "type": "ORG",
+      "value": "Netflix",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-020",
+      "type": "ORG",
+      "value": "Facebook",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-021",
+      "type": "ORG",
+      "value": "Stanford University",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-022",
+      "type": "ORG",
+      "value": "Massachusetts Institute of Technology",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Contains 'Massachusetts', a state. High risk of partial LOCATION extraction splitting the institution name."
+    },
+    {
+      "id": "ap-023",
+      "type": "ORG",
+      "value": "University of California, Berkeley",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Contains 'California' and 'Berkeley', both LOCATIONs. If phase-1 LOCATION tokenization fires inside the institution name, the education section renders as 'University of ⟪LOC_04⟫, ⟪LOC_09⟫' — visibly broken output. Best single illustration of why ORG/LOCATION boundary handling matters."
+    },
+    {
+      "id": "ap-024",
+      "type": "DATE",
+      "value": "2017",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Employment/award date. A quasi-identifier when paired with an employer (Addendum A.3)."
+    },
+    {
+      "id": "ap-025",
+      "type": "DATE",
+      "value": "2012",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-026",
+      "type": "DATE",
+      "value": "2017",
+      "field": null,
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-027",
+      "type": "DATE",
+      "value": "2007",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-028",
+      "type": "DATE",
+      "value": "2012",
+      "field": null,
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-029",
+      "type": "DATE",
+      "value": "2002",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-030",
+      "type": "DATE",
+      "value": "2007",
+      "field": null,
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-031",
+      "type": "DATE",
+      "value": "1999",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-032",
+      "type": "DATE",
+      "value": "2002",
+      "field": null,
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-033",
+      "type": "DATE",
+      "value": "2016",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-034",
+      "type": "DATE",
+      "value": "2018",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-035",
+      "type": "DATE",
+      "value": "1997",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-036",
+      "type": "DATE",
+      "value": "1999",
+      "field": null,
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-037",
+      "type": "DATE",
+      "value": "1994",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-038",
+      "type": "DATE",
+      "value": "1997",
+      "field": null,
+      "occurrence": 2,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "ap-039",
+      "type": "DATE",
+      "value": "2020",
+      "field": null,
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    }
   ],
-
   "negative_controls": [
-    { "value": "Raspberry Pi", "note": "Product name; 'Pi' is also a Greek letter and a surname." },
-    { "value": "Java",   "note": "Indonesian island — LOCATION false-positive risk." },
-    { "value": "Python", "note": "Also a snake and a Greek myth." },
-    { "value": "AWS",    "note": "Acronym." },
-    { "value": "Agile methodologies", "note": "" },
-    { "value": "FAANG",  "note": "Acronym in the summary; expands to five ORGs. A model may expand it." },
-    { "value": "Home Automation System", "note": "Project title, three capitalised words." },
-    { "value": "Pennyworth", "note": "CONTRAST — surname appears only inside ap-001 and inside the email/handle derivatives. No standalone occurrence. A standalone hit is a false positive." }
+    {
+      "value": "Raspberry Pi",
+      "note": "Product name; 'Pi' is also a Greek letter and a surname."
+    },
+    {
+      "value": "Java",
+      "note": "Indonesian island — LOCATION false-positive risk."
+    },
+    {
+      "value": "Python",
+      "note": "Also a snake and a Greek myth."
+    },
+    {
+      "value": "AWS",
+      "note": "Acronym."
+    },
+    {
+      "value": "Agile methodologies",
+      "note": ""
+    },
+    {
+      "value": "FAANG",
+      "note": "Acronym in the summary; expands to five ORGs. A model may expand it."
+    },
+    {
+      "value": "Home Automation System",
+      "note": "Project title, three capitalised words."
+    },
+    {
+      "value": "Pennyworth",
+      "note": "CONTRAST — surname appears only inside ap-001 and inside the email/handle derivatives. No standalone occurrence. A standalone hit is a false positive."
+    }
   ],
-
   "known_traps": [
     "Icon-font glyph corruption adjacent to ALL FOUR contact fields — the defining feature of this document. If tier 0 field routing depends on clean contact-line formatting, this document breaks it.",
     "ap-006 / ap-007 — bare social handles whose only identifying marker was the icon that failed to extract. Expect a miss; documents that icon fonts must be handled at the PDF layer.",
@@ -99,9 +497,49 @@
     "Eight distinct work/education LOCATIONs — the densest location test in the corpus.",
     "Five FAANG ORG names as negative controls for PERSON detection, plus 'Amazon' and 'Apple' as LOCATION/common-noun risks."
   ],
-
   "expected_phase1_counts": {
     "total_spans": 15,
-    "by_context": { "structured": 4, "derived": 3, "prose": 8 }
+    "by_context": {
+      "structured": 4,
+      "derived": 3,
+      "prose": 8
+    },
+    "by_subject": {
+      "candidate": 15
+    },
+    "by_type": {
+      "PERSON": 1,
+      "LOCATION": 9,
+      "PHONE": 1,
+      "EMAIL": 1,
+      "DERIVATIVE": 1,
+      "HANDLE": 2
+    }
+  },
+  "substrate": {
+    "produced_by": "blackjet.loader._load_pdf",
+    "form": "layout-mode extraction, icon-font runs removed, column padding collapsed, [PDF METADATA] block appended",
+    "note": "locator_mode is 'document'; occurrence indices resolve against this text. A label file for a PDF is meaningless without naming its substrate."
+  },
+  "phase2_disposition": {
+    "status": "open",
+    "current": "pass",
+    "question": "Should employer and institution names, their URLs and employment dates be suppressed?",
+    "for_suppress": "Employer + role + dates + location re-identifies without a name (defects-v2 3.4, Addendum A.3).",
+    "against_suppress": "Org identity carries downstream signal a consumer may need - a job-board matcher requires the current employer in order not to match a candidate to the firm already employing them.",
+    "note": "Applies corpus-wide. Every phase-2 span in this file carries 'pass' pending this decision."
+  },
+  "expected_phase2_counts": {
+    "total_spans": 24,
+    "by_context": {
+      "prose": 24
+    },
+    "by_subject": {
+      "candidate": 24
+    },
+    "by_type": {
+      "ORG": 8,
+      "DATE": 16
+    }
   }
 }

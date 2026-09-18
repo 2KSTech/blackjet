@@ -7,93 +7,854 @@
   "corpus_role": "#2 name in prose — plus third-party PII and URLs outside the contact block",
   "labelled_by": "hand",
   "labelled_date": "2026-08-01",
-
   "extraction_notes": [
     "JSON Resume schema, so field paths are exact and locator_mode is 'field'. No extraction loss.",
-    "basics.location.postalCode is 'CA 94105' — that is a region and a ZIP, not a postal code. Malformed source data. Suppressed either way, but note the schema is not trustworthy field-by-field."
+    "basics.location.postalCode is 'CA 94105' - that is a region and a ZIP, not a postal code. Malformed source data. Suppressed either way, but the schema is not trustworthy field-by-field.",
+    "The phase-1 counts in this file were already correct and were not changed. One imprecision fixed: known_traps said 'Three third-party individuals' where there are two.",
+    "ADDED: a phase-2 section covering employers, institutions, their URLs, dates, GPA and self-assessed levels - previously the file labelled only four phase-2 ORGs and was silent on the rest."
   ],
-
   "spans": [
-    { "id": "sj-001", "type": "PERSON", "value": "Sarah Johnson", "field": "basics.name", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
-    { "id": "sj-002", "type": "EMAIL", "value": "sarah.johnson@email.com", "field": "basics.email", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
-    { "id": "sj-003", "type": "PHONE", "value": "(555) 123-4567", "field": "basics.phone", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
-    { "id": "sj-004", "type": "URL", "value": "https://sarahjohnson.dev", "field": "basics.url", "occurrence": 1,
-      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress",
-      "note": "Personal domain — the name IS the domain." },
-    { "id": "sj-005", "type": "ADDRESS", "value": "123 Tech Street", "field": "basics.location.address", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
-    { "id": "sj-006", "type": "POSTAL", "value": "CA 94105", "field": "basics.location.postalCode", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
-    { "id": "sj-007", "type": "LOCATION", "value": "San Francisco", "field": "basics.location.city", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
-    { "id": "sj-008", "type": "LOCATION", "value": "California", "field": "basics.location.region", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 1, "expected": "suppress" },
-    { "id": "sj-009", "type": "HANDLE", "value": "sarahjohnson", "field": "basics.profiles[0].username", "occurrence": 1,
-      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress" },
-    { "id": "sj-010", "type": "URL", "value": "https://linkedin.com/in/sarahjohnson", "field": "basics.profiles[0].url", "occurrence": 1,
-      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress" },
-    { "id": "sj-011", "type": "HANDLE", "value": "sarahjohnson", "field": "basics.profiles[1].username", "occurrence": 1,
-      "subject": "candidate", "context": "derived", "phase": 1, "expected": "suppress" },
-    { "id": "sj-012", "type": "URL", "value": "https://github.com/sarahjohnson", "field": "basics.profiles[1].url", "occurrence": 1,
-      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress" },
-
-    { "id": "sj-013", "type": "PERSON", "value": "John Smith", "field": "references[0].name", "occurrence": 1,
-      "subject": "third_party", "context": "structured", "phase": 1, "expected": "suppress",
-      "note": "A referee. Not a user of the app, never consented, has no idea their name is being transmitted. Sits outside the candidate contact block, so the header/body split does NOT protect it." },
-    { "id": "sj-014", "type": "PERSON", "value": "Sarah", "field": "references[0].reference", "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
-      "note": "THE case the NER tier exists for. Given name only, mid-sentence, no adjacent contact cues. A string-match tokenizer keyed on 'Sarah Johnson' misses it. Full text: '...Sarah is an exceptional developer...'" },
-    { "id": "sj-015", "type": "ORG", "value": "TechCorp Inc.", "field": "references[0].reference", "occurrence": 1,
-      "subject": "third_party", "context": "prose", "phase": 2, "expected": "pass",
-      "note": "Combined with sj-013's name and the title 'Senior Engineering Manager', this identifies a specific named individual at a specific named employer. Quasi-identifier for a third party." },
-    { "id": "sj-016", "type": "PERSON", "value": "Dr. Emily Chen", "field": "references[1].name", "occurrence": 1,
-      "subject": "third_party", "context": "structured", "phase": 1, "expected": "suppress",
-      "note": "Honorific attached. NER may return 'Emily Chen' and drop 'Dr.', producing a partial-span match. Decide whether the harness scores partial spans as TP or FN — recommend FN, since a leaked honorific plus surname is still identifying." },
-    { "id": "sj-017", "type": "PERSON", "value": "Sarah", "field": "references[1].reference", "occurrence": 1,
-      "subject": "candidate", "context": "prose", "phase": 1, "expected": "tokenize",
-      "note": "'Sarah was an outstanding student...'" },
-    { "id": "sj-018", "type": "ORG", "value": "Stanford University", "field": "references[1].reference", "occurrence": 1,
-      "subject": "third_party", "context": "prose", "phase": 2, "expected": "pass" },
-
-    { "id": "sj-019", "type": "URL", "value": "https://github.com/sarahjohnson/ecommerce", "field": "projects[0].url", "occurrence": 1,
-      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress",
-      "note": "CRITICAL: this is OUTSIDE basics{}. If the suppressor only covers the contact block, this leaks the candidate's full name via the URL path. Direct test of spec v0.5 open question in method §6." },
-    { "id": "sj-020", "type": "URL", "value": "https://github.com/sarahjohnson/taskmanager", "field": "projects[1].url", "occurrence": 1,
-      "subject": "candidate", "context": "url", "phase": 1, "expected": "suppress",
-      "note": "Same gap as sj-019." },
-
-    { "id": "sj-021", "type": "ORG", "value": "Stanford University", "field": "education[0].institution", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 2, "expected": "pass" },
-    { "id": "sj-022", "type": "ORG", "value": "University of California, Berkeley", "field": "education[1].institution", "occurrence": 1,
-      "subject": "candidate", "context": "structured", "phase": 2, "expected": "pass" }
+    {
+      "id": "sj-001",
+      "type": "PERSON",
+      "value": "Sarah Johnson",
+      "field": "basics.name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "sj-002",
+      "type": "EMAIL",
+      "value": "sarah.johnson@email.com",
+      "field": "basics.email",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "sj-003",
+      "type": "PHONE",
+      "value": "(555) 123-4567",
+      "field": "basics.phone",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "sj-004",
+      "type": "URL",
+      "value": "https://sarahjohnson.dev",
+      "field": "basics.url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Personal domain — the name IS the domain."
+    },
+    {
+      "id": "sj-005",
+      "type": "ADDRESS",
+      "value": "123 Tech Street",
+      "field": "basics.location.address",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "sj-006",
+      "type": "POSTAL",
+      "value": "CA 94105",
+      "field": "basics.location.postalCode",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "sj-007",
+      "type": "LOCATION",
+      "value": "San Francisco",
+      "field": "basics.location.city",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "sj-008",
+      "type": "LOCATION",
+      "value": "California",
+      "field": "basics.location.region",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "sj-009",
+      "type": "HANDLE",
+      "value": "sarahjohnson",
+      "field": "basics.profiles[0].username",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "derived",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "sj-010",
+      "type": "URL",
+      "value": "https://linkedin.com/in/sarahjohnson",
+      "field": "basics.profiles[0].url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "sj-011",
+      "type": "HANDLE",
+      "value": "sarahjohnson",
+      "field": "basics.profiles[1].username",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "derived",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "sj-012",
+      "type": "URL",
+      "value": "https://github.com/sarahjohnson",
+      "field": "basics.profiles[1].url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 1,
+      "expected": "suppress"
+    },
+    {
+      "id": "sj-013",
+      "type": "PERSON",
+      "value": "John Smith",
+      "field": "references[0].name",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "A referee. Not a user of the app, never consented, has no idea their name is being transmitted. Sits outside the candidate contact block, so the header/body split does NOT protect it."
+    },
+    {
+      "id": "sj-014",
+      "type": "PERSON",
+      "value": "Sarah",
+      "field": "references[0].reference",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize",
+      "note": "THE case the NER tier exists for. Given name only, mid-sentence, no adjacent contact cues. A string-match tokenizer keyed on 'Sarah Johnson' misses it. Full text: '...Sarah is an exceptional developer...'"
+    },
+    {
+      "id": "sj-015",
+      "type": "ORG",
+      "value": "TechCorp Inc.",
+      "field": "references[0].reference",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Combined with sj-013's name and the title 'Senior Engineering Manager', this identifies a specific named individual at a specific named employer. Quasi-identifier for a third party."
+    },
+    {
+      "id": "sj-016",
+      "type": "PERSON",
+      "value": "Dr. Emily Chen",
+      "field": "references[1].name",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "structured",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Honorific attached. NER may return 'Emily Chen' and drop 'Dr.', producing a partial-span match. Decide whether the harness scores partial spans as TP or FN — recommend FN, since a leaked honorific plus surname is still identifying."
+    },
+    {
+      "id": "sj-017",
+      "type": "PERSON",
+      "value": "Sarah",
+      "field": "references[1].reference",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "prose",
+      "phase": 1,
+      "expected": "tokenize",
+      "note": "'Sarah was an outstanding student...'"
+    },
+    {
+      "id": "sj-018",
+      "type": "ORG",
+      "value": "Stanford University",
+      "field": "references[1].reference",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "prose",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-019",
+      "type": "URL",
+      "value": "https://github.com/sarahjohnson/ecommerce",
+      "field": "projects[0].url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "CRITICAL: this is OUTSIDE basics{}. If the suppressor only covers the contact block, this leaks the candidate's full name via the URL path. Direct test of spec v0.5 open question in method §6."
+    },
+    {
+      "id": "sj-020",
+      "type": "URL",
+      "value": "https://github.com/sarahjohnson/taskmanager",
+      "field": "projects[1].url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 1,
+      "expected": "suppress",
+      "note": "Same gap as sj-019."
+    },
+    {
+      "id": "sj-021",
+      "type": "ORG",
+      "value": "Stanford University",
+      "field": "education[0].institution",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-022",
+      "type": "ORG",
+      "value": "University of California, Berkeley",
+      "field": "education[1].institution",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-023",
+      "type": "ORG",
+      "value": "TechCorp Inc.",
+      "field": "work[0].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Current employer. Same string as sj-015 (in prose) and awards[0].awarder."
+    },
+    {
+      "id": "sj-024",
+      "type": "ORG",
+      "value": "StartupXYZ",
+      "field": "work[1].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-025",
+      "type": "ORG",
+      "value": "Digital Solutions",
+      "field": "work[2].name",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-026",
+      "type": "ORG",
+      "value": "TechCorp Inc.",
+      "field": "awards[0].awarder",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Awarder is the employer; award + employer + date is a tight quasi-identifier."
+    },
+    {
+      "id": "sj-027",
+      "type": "ORG",
+      "value": "Stanford University",
+      "field": "awards[1].awarder",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-028",
+      "type": "ORG",
+      "value": "Code for Good",
+      "field": "volunteer[0].organization",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Declared a negative control for detection; labelled here so its disposition is stated rather than absent."
+    },
+    {
+      "id": "sj-029",
+      "type": "ORG",
+      "value": "Amazon Web Services",
+      "field": "certificates[0].issuer",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-030",
+      "type": "ORG",
+      "value": "Google",
+      "field": "certificates[1].issuer",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-031",
+      "type": "ORG",
+      "value": "Tech Blog",
+      "field": "publications[0].publisher",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-032",
+      "type": "URL",
+      "value": "https://techcorp.com",
+      "field": "work[0].url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Employer/institution site. Resolves the organisation even if its ORG span is passed."
+    },
+    {
+      "id": "sj-033",
+      "type": "URL",
+      "value": "https://startupxyz.com",
+      "field": "work[1].url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-034",
+      "type": "URL",
+      "value": "https://digitalsolutions.com",
+      "field": "work[2].url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-035",
+      "type": "URL",
+      "value": "https://stanford.edu",
+      "field": "education[0].url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-036",
+      "type": "URL",
+      "value": "https://berkeley.edu",
+      "field": "education[1].url",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "url",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-037",
+      "type": "URL",
+      "value": "https://codeforgood.org",
+      "field": "volunteer[0].url",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "url",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-038",
+      "type": "URL",
+      "value": "https://aws.amazon.com/certification/",
+      "field": "certificates[0].url",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "url",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-039",
+      "type": "URL",
+      "value": "https://cloud.google.com/certification/",
+      "field": "certificates[1].url",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "url",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-040",
+      "type": "URL",
+      "value": "https://techblog.com/microservices",
+      "field": "publications[0].url",
+      "occurrence": 1,
+      "subject": "third_party",
+      "context": "url",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-041",
+      "type": "DATE",
+      "value": "2022-12-01",
+      "field": "awards[0].date",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-042",
+      "type": "DATE",
+      "value": "2015-05-01",
+      "field": "awards[1].date",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-043",
+      "type": "DATE",
+      "value": "2022-06-15",
+      "field": "certificates[0].date",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-044",
+      "type": "DATE",
+      "value": "2021-11-20",
+      "field": "certificates[1].date",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-045",
+      "type": "DATE",
+      "value": "2017-05-30",
+      "field": "education[0].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-046",
+      "type": "DATE",
+      "value": "2015-09-01",
+      "field": "education[0].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-047",
+      "type": "DATE",
+      "value": "2015-05-30",
+      "field": "education[1].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-048",
+      "type": "DATE",
+      "value": "2011-09-01",
+      "field": "education[1].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-049",
+      "type": "DATE",
+      "value": "2022-06-30",
+      "field": "projects[0].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-050",
+      "type": "DATE",
+      "value": "2022-01-01",
+      "field": "projects[0].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-051",
+      "type": "DATE",
+      "value": "2021-12-31",
+      "field": "projects[1].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-052",
+      "type": "DATE",
+      "value": "2021-08-01",
+      "field": "projects[1].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-053",
+      "type": "DATE",
+      "value": "2022-03-15",
+      "field": "publications[0].releaseDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-054",
+      "type": "DATE",
+      "value": "2020-01-01",
+      "field": "volunteer[0].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-055",
+      "type": "DATE",
+      "value": "2021-03-01",
+      "field": "work[0].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Employment date. Formerly deleted by _JSON_SKIP_KEYS before detection ran (Addendum A)."
+    },
+    {
+      "id": "sj-056",
+      "type": "DATE",
+      "value": "2021-02-28",
+      "field": "work[1].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-057",
+      "type": "DATE",
+      "value": "2019-01-15",
+      "field": "work[1].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-058",
+      "type": "DATE",
+      "value": "2018-12-31",
+      "field": "work[2].endDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-059",
+      "type": "DATE",
+      "value": "2017-06-01",
+      "field": "work[2].startDate",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-060",
+      "type": "SCORE",
+      "value": "3.9",
+      "field": "education[0].score",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Addendum A.3: 'score' is a GPA, not schema scaffolding. Formerly deleted."
+    },
+    {
+      "id": "sj-061",
+      "type": "SCORE",
+      "value": "3.8",
+      "field": "education[1].score",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-062",
+      "type": "SELF_ASSESSMENT",
+      "value": "Expert",
+      "field": "skills[0].level",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-063",
+      "type": "SELF_ASSESSMENT",
+      "value": "Advanced",
+      "field": "skills[1].level",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-064",
+      "type": "SELF_ASSESSMENT",
+      "value": "Advanced",
+      "field": "skills[2].level",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-065",
+      "type": "SELF_ASSESSMENT",
+      "value": "Intermediate",
+      "field": "skills[3].level",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass"
+    },
+    {
+      "id": "sj-066",
+      "type": "LOCATION",
+      "value": "US",
+      "field": "basics.location.countryCode",
+      "occurrence": 1,
+      "subject": "candidate",
+      "context": "structured",
+      "phase": 2,
+      "expected": "pass",
+      "note": "Country granularity, passed deliberately; basics.location.city and .region are suppressed (sj-007, sj-008)."
+    }
   ],
-
   "negative_controls": [
-    { "value": "React",      "note": "Capitalised verb." },
-    { "value": "Node.js",    "note": "" },
-    { "value": "Redis",      "note": "Reads as a surname." },
-    { "value": "Express.js", "note": "" },
-    { "value": "Kubernetes", "note": "Greek-looking proper noun — plausible PERSON or LOCATION to a weak model." },
-    { "value": "Stripe",     "note": "In projects[0].description. ORG, but a payment vendor, not the candidate's employer." },
-    { "value": "Code for Good", "note": "Volunteer org. Sentence-shaped — 'Code for Good' parses as an imperative clause." },
-    { "value": "GraphQL",    "note": "" },
-    { "value": "Dean's List", "note": "Award title containing a possessive proper noun." }
+    {
+      "value": "React",
+      "note": "Capitalised verb."
+    },
+    {
+      "value": "Node.js",
+      "note": ""
+    },
+    {
+      "value": "Redis",
+      "note": "Reads as a surname."
+    },
+    {
+      "value": "Express.js",
+      "note": ""
+    },
+    {
+      "value": "Kubernetes",
+      "note": "Greek-looking proper noun — plausible PERSON or LOCATION to a weak model."
+    },
+    {
+      "value": "Stripe",
+      "note": "In projects[0].description. ORG, but a payment vendor, not the candidate's employer."
+    },
+    {
+      "value": "Code for Good",
+      "note": "Volunteer org. Sentence-shaped — 'Code for Good' parses as an imperative clause."
+    },
+    {
+      "value": "GraphQL",
+      "note": ""
+    },
+    {
+      "value": "Dean's List",
+      "note": "Award title containing a possessive proper noun."
+    }
   ],
-
   "known_traps": [
     "Two 'Sarah' in-prose hits (sj-014, sj-017) buried in referee quotes — the field most likely to be treated as harmless body content.",
-    "Three third-party individuals' details (sj-013, sj-016, plus titles/employers) that the header/body split does not cover.",
+    "Two third-party individuals (sj-013, sj-016) plus their titles and employers that the header/body split does not cover.",
     "Two GitHub URLs outside basics{} (sj-019, sj-020) containing the candidate's name — tests whether URL suppression is field-scoped or global.",
     "'Dr. Emily Chen' — partial-span scoring decision.",
     "basics.summary is deliberately clean of names; confirms the detector is not simply flagging every summary field."
   ],
-
   "expected_phase1_counts": {
     "total_spans": 18,
-    "by_context": { "structured": 9, "url": 5, "derived": 2, "prose": 2 },
-    "by_subject": { "candidate": 16, "third_party": 2 }
+    "by_context": {
+      "structured": 9,
+      "url": 5,
+      "derived": 2,
+      "prose": 2
+    },
+    "by_subject": {
+      "candidate": 16,
+      "third_party": 2
+    },
+    "by_type": {
+      "PERSON": 5,
+      "EMAIL": 1,
+      "PHONE": 1,
+      "URL": 5,
+      "ADDRESS": 1,
+      "POSTAL": 1,
+      "LOCATION": 2,
+      "HANDLE": 2
+    }
+  },
+  "substrate": {
+    "produced_by": "blackjet.loader._load_json_resume",
+    "form": "the source JSON, re-serialized with two-space indent",
+    "note": "locator_mode is 'field'; every span's field path resolves against loader.ValueSpan.path."
+  },
+  "phase2_disposition": {
+    "status": "open",
+    "current": "pass",
+    "question": "Should employer and institution names, their URLs, employment dates and GPA be suppressed?",
+    "for_suppress": "Employer + role + dates + location re-identifies without a name (defects-v2 3.4, Addendum A.3).",
+    "against_suppress": "Org identity carries downstream signal a consumer may need - a job-board matcher requires the current employer in order not to match a candidate to the firm already employing them.",
+    "note": "Applies corpus-wide. Every phase-2 span in this file carries 'pass' pending this decision."
+  },
+  "expected_phase2_counts": {
+    "total_spans": 48,
+    "by_context": {
+      "prose": 2,
+      "structured": 37,
+      "url": 9
+    },
+    "by_subject": {
+      "third_party": 9,
+      "candidate": 39
+    },
+    "by_type": {
+      "ORG": 13,
+      "URL": 9,
+      "DATE": 19,
+      "SCORE": 2,
+      "SELF_ASSESSMENT": 4,
+      "LOCATION": 1
+    }
   }
 }

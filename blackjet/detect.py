@@ -129,6 +129,112 @@ def _regex_findings(text: str) -> list[Finding]:
 
 
 # --------------------------------------------------------------------------
+# Tier 0 — structural field rules
+# --------------------------------------------------------------------------
+
+# Fields whose value is personal because of WHERE it sits, not what it looks
+# like. Content inspection cannot reach these: a username is an ordinary word,
+# a street address is not a distinctive shape, and an avatar URL carrying a
+# numeric account id has no name in it at all. The configured NER entity set is
+# PERSON and LOCATION, so ADDRESS, POSTAL, HANDLE and IDENTIFIER are otherwise
+# unreachable at any extraction quality.
+#
+# Matched against the JSON path of a value span, so this tier only ever applies
+# to a loader that reports where its values came from.
+_FIELD_RULES: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"^basics\.name$"), "PERSON"),
+    (re.compile(r"^basics\.email$"), "EMAIL"),
+    (re.compile(r"^basics\.phone$"), "PHONE"),
+    (re.compile(r"^basics\.(?:url|website)$"), "URL"),
+    (re.compile(r"^basics\.image$"), "IDENTIFIER"),
+    (re.compile(r"^basics\.location\.address$"), "ADDRESS"),
+    (re.compile(r"^basics\.location\.postalCode$"), "POSTAL"),
+    (re.compile(r"^basics\.location\.(?:city|region)$"), "LOCATION"),
+    (re.compile(r"^basics\.profiles\[\d+\]\.username$"), "HANDLE"),
+    (re.compile(r"^basics\.profiles\[\d+\]\.url$"), "URL"),
+)
+
+# basics.location.countryCode is deliberately absent. A country is not a
+# quasi-identifier at this granularity once city and region are suppressed.
+
+
+# A resume's first line is its owner's name. That is a layout convention, not a
+# guess, and it is the one clue the NER tier cannot use: en_core_web_lg does not
+# return 'Ivy Haddington' from Ivy_Haddington.pdf under either extraction mode,
+# even though the string is intact and correctly spelled. The name most needing
+# suppression is the one a statistical model is least anchored on, because a
+# bare header line carries no surrounding sentence.
+#
+# Applied to the FIRST non-empty line only, and only when it still looks like a
+# name. A wider "header zone" rule would take job titles with it — the line
+# after the name is 'Product Manager' as often as not.
+_HEADER_NAME_RE = re.compile(r"^[^\W\d_][\w'’\-\.]*(?: [^\W\d_][\w'’\-\.]*){1,3}$")
+
+
+def header_name_findings(text: str) -> list[Finding]:
+    """Tier 0 for unstructured documents: the name in the header line."""
+    offset = 0
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if stripped:
+            start = offset + line.index(stripped)
+            if (
+                "," not in stripped
+                and "@" not in stripped
+                and not any(c.isdigit() for c in stripped)
+                and _HEADER_NAME_RE.match(stripped)
+            ):
+                # Never log the value. This runs before vault.token_for has
+                # registered it as a redaction secret, so anything written here
+                # lands in the log in the clear.
+                log.debug(
+                    "Tier 0 header rule matched the first line (%d chars)",
+                    len(stripped),
+                )
+                return [
+                    Finding(
+                        start=start,
+                        end=start + len(stripped),
+                        entity_type="PERSON",
+                        value=stripped,
+                        tier="header",
+                        score=1.0,
+                    )
+                ]
+            return []
+        offset += len(line) + 1
+    return []
+
+
+def field_findings(text: str, value_spans) -> list[Finding]:
+    """Tier 0: values that are personal by field identity.
+
+    ``value_spans`` are ``loader.ValueSpan`` objects. Returns one finding per
+    matching field, covering the whole value.
+    """
+    findings: list[Finding] = []
+    for span in value_spans or ():
+        for pattern, entity_type in _FIELD_RULES:
+            if pattern.match(span.path):
+                value = text[span.start : span.end]
+                if value.strip():
+                    findings.append(
+                        Finding(
+                            start=span.start,
+                            end=span.end,
+                            entity_type=entity_type,
+                            value=value,
+                            tier="field",
+                            score=1.0,
+                        )
+                    )
+                break
+
+    log.debug("Tier 0 field rules produced %d finding(s)", len(findings))
+    return findings
+
+
+# --------------------------------------------------------------------------
 # Tier 2 — Presidio NER
 # --------------------------------------------------------------------------
 
@@ -311,8 +417,101 @@ def _resolve_overlaps(findings: Iterable[Finding]) -> list[Finding]:
     return kept
 
 
-def detect(text: str) -> list[Finding]:
+# Minimum length for a derived handle to be searched for. Short forms collide
+# with ordinary words; 'apennyworth' is safe, 'adavis' would be less so.
+_MIN_DERIVATIVE_LEN = 8
+
+
+def _derivatives(name: str) -> set[str]:
+    """Handle-shaped forms a person's own name can produce."""
+    parts = [p for p in re.split(r"[\s.]+", name.strip()) if p.isalpha()]
+    if len(parts) < 2:
+        return set()
+    first, last = parts[0].lower(), parts[-1].lower()
+    joined = {
+        first + last,
+        first[0] + last,
+        first + last[0],
+        last + first,
+        f"{first}.{last}",
+        f"{first}_{last}",
+        f"{first}-{last}",
+        f"{first[0]}.{last}",
+    }
+    return {d for d in joined if len(d) >= _MIN_DERIVATIVE_LEN}
+
+
+def derivative_findings(text: str, persons: Iterable[str]) -> list[Finding]:
+    """Handles and usernames built out of a name already detected in the document.
+
+    A username is an ordinary-looking word: neither NER nor a string match
+    against the full name will find 'apennyworth', and suppressing the name
+    leaves it sitting in the clear. Seeding the search from a PERSON already
+    found keeps this from being a guess — the only strings looked for are ones
+    this document's own name could produce.
+
+    The bare surname is deliberately not generated. It is identifying in
+    isolation, but every label file in the corpus lists it as a value that must
+    not fire on its own, and it appears inside the full name anyway.
+    """
+    wanted: set[str] = set()
+    for person in persons:
+        wanted |= _derivatives(person)
+    if not wanted:
+        return []
+
+    findings: list[Finding] = []
+    pattern = re.compile(
+        r"(?<![\w.])(?:%s)(?![\w])" % "|".join(sorted(map(re.escape, wanted), key=len, reverse=True)),
+        re.IGNORECASE,
+    )
+    for match in pattern.finditer(text):
+        findings.append(
+            Finding(
+                start=match.start(),
+                end=match.end(),
+                entity_type="HANDLE",
+                value=match.group(0),
+                tier="derivative",
+                score=1.0,
+            )
+        )
+    log.debug("Derivative pass produced %d finding(s)", len(findings))
+    return findings
+
+
+def _clip_to_values(findings: Iterable[Finding], text: str, value_spans) -> list[Finding]:
+    """Discard findings that are not wholly inside one data value.
+
+    Only meaningful when the loader reports value spans. A match that starts in
+    one value and ends in another, or that lands on a key name or on JSON
+    punctuation, is not an entity — it is an artifact of the substrate. Keeping
+    it would tokenize across a record boundary and corrupt the document.
+    """
+    bounds = sorted((s.start, s.end) for s in value_spans)
+    kept: list[Finding] = []
+    dropped = 0
+    for f in findings:
+        inside = any(start <= f.start and f.end <= end for start, end in bounds)
+        if inside:
+            kept.append(f)
+        else:
+            dropped += 1
+            log.debug(
+                "Discarding finding type=%s tier=%s at [%d,%d): crosses a value "
+                "boundary or lies outside any data value",
+                f.entity_type, f.tier, f.start, f.end,
+            )
+    if dropped:
+        log.info("Discarded %d finding(s) not contained in a single data value", dropped)
+    return kept
+
+
+def detect(text: str, value_spans=None) -> list[Finding]:
     """Detect all PII in ``text``, returned in document order.
+
+    ``value_spans`` is optional. When the loader supplies it, tier 0 runs and
+    every finding is required to sit wholly inside one data value.
 
     Raises
     ------
@@ -326,14 +525,31 @@ def detect(text: str) -> list[Finding]:
         log.warning("detect() called with empty text; nothing to do")
         return []
 
+    if value_spans:
+        field_hits = field_findings(text, value_spans)
+    else:
+        field_hits = header_name_findings(text)
     regex_hits = _regex_findings(text)
     ner_hits = _ner_findings(text)
-    merged = _resolve_overlaps(regex_hits + ner_hits)
+
+    candidates = field_hits + regex_hits + ner_hits
+
+    persons = {f.value for f in candidates if f.entity_type == "PERSON"}
+    derived_hits = derivative_findings(text, persons)
+    candidates += derived_hits
+
+    if value_spans:
+        candidates = _clip_to_values(candidates, text, value_spans)
+
+    merged = _resolve_overlaps(candidates)
 
     log.info(
-        "Detection complete: %d regex + %d ner -> %d after overlap resolution",
+        "Detection complete: %d field + %d regex + %d ner + %d derivative -> "
+        "%d after overlap resolution",
+        len(field_hits),
         len(regex_hits),
         len(ner_hits),
+        len(derived_hits),
         len(merged),
     )
     return merged

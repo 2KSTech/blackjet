@@ -80,7 +80,9 @@ def run_pipeline(doc_id: str) -> dict:
     session_id = uuid.uuid4().hex
     session = VAULT.create(session_id)
     try:
-        anonymized, findings = pipeline.anonymize(doc.text, session)
+        anonymized, findings = pipeline.anonymize(
+            doc.text, session, value_spans=doc.value_spans
+        )
     except pipeline.PipelineError as exc:
         VAULT.destroy(session_id)
         result["error"] = f"Anonymization failed (nothing was sent): {exc}"

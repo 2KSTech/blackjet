@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>blackjet — PII round-trip demo</title>
+<title>blackjet — PII Round-Trip Demo</title>
 <style>
   :root {
     --bg: #16161a; --panel: #1f1f26; --border: #33333d;
@@ -76,23 +76,41 @@
   .logpane .lg  { color: var(--dim); }
   .logpane .stage { color: var(--green); }
   .loghead { display: flex; align-items: baseline; gap: 10px; margin-top: 20px; }
-  .loghead h2 { margin: 0; }
+  .loghead h2 { margin: 0; flex: none; white-space: nowrap; }
   .loghead .note { color: var(--dim); font-size: 12px; }
   .flow {
     background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-    padding: 14px 16px; font: 13px/1.7 ui-monospace, monospace; color: var(--text);
+    padding: 14px 16px;
   }
+  .flow svg { display: block; width: 100%; height: auto; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; margin: 8px 0;
+  }
+  .panel p { margin: 4px 0 2px; color: var(--dim); }
+  details.collapsible {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; margin: 8px 0;
+  }
+  details.collapsible + details.collapsible { margin-top: 8px; }
+  details.collapsible summary {
+    cursor: pointer; color: var(--text); font-weight: 600; list-style: none;
+  }
+  details.collapsible summary::-webkit-details-marker { display: none; }
+  details.collapsible summary::before { content: "▸ "; color: var(--dim); }
+  details.collapsible[open] summary::before { content: "▾ "; }
+  details.collapsible p { margin: 10px 0 2px; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>blackjet</h1>
-  <span class="sub">detect &middot; anonymize &middot; rehydrate — only tokens cross the wire</span>
+  <span class="sub">Only tokens cross the wire.</span>
 </header>
 
 <div class="controls">
-  <select id="docsel"><option>loading corpus…</option></select>
+  <select id="docsel"><option>Loading corpus…</option></select>
   <button class="run" id="runbtn">Run</button>
   <span id="runstate"></span>
 </div>
@@ -109,45 +127,113 @@
 
   <section class="tab about active" id="tab-about">
     <div class="about">
-      <h2>What this demonstrates</h2>
+      <h2>What This Demonstrates</h2>
       <p>A document full of personal data can be processed by a remote model API
          without any of that personal data leaving your machine.</p>
       <div class="flow">
-Real resume ──▶ Detect + tokenize (local) ──▶ &lt;&lt;PERSON_01&gt;&gt; crosses the wire ──▶ API
-                     │                                                            │
-                     ▼                                                            ▼
-             Rehydration map (never leaves) ◀───────────────── tokens return ◀────┘
-                     │
-                     ▼
-             Final output (local)</div>
-      <h2>The three steps</h2>
-      <p><b>1 Detect + anonymize.</b> Emails, phones and URLs are found with
-         deterministic patterns; names and locations with NER (Microsoft Presidio,
-         running locally). Each value is replaced with a token like
-         <span class="tok">&lt;&lt;EMAIL_01&gt;&gt;</span> and the token→value map is
-         kept in memory here.</p>
-      <p><b>2 Send.</b> The tokenized text goes to the configured model endpoint
-         &mdash; by default a local Ollama. A tripwire
-         re-scans the outbound payload first and blocks the send if any real value
-         remains. The map is never part of the request, so it cannot be leaked or
-         prompt-injected out — it simply isn't there.</p>
-      <p><b>3 Rehydrate.</b> Tokens in the response are swapped back for real
-         values, locally. Any token the model altered is surfaced as an error,
-         never silently dropped.</p>
-      <h2>Honest limitations</h2>
-      <p>Detection is probabilistic — a missed name is sent in the clear, which is
-         why recall must be measured, not assumed. And tokenization does not solve
-         re-identification from context: "sole female VP at a 40-person Reykjavík
-         fintech" identifies someone with every name removed.</p>
-      <div class="loghead">
-        <h2>Runtime log</h2>
-        <span class="note">live, and itself the proof: every line below passed the
-        same redaction filter, so no real value can appear here. Values shorter
-        than 4 characters (e.g. a state code) are deliberately not redacted.
-        Corpus filenames are registered as secrets at startup, so even
-        <code>Loading &lt;file&gt;.pdf</code> shows <code>[REDACTED]</code>.</span>
+        <svg viewBox="0 0 700 320" font-family="system-ui, sans-serif" role="img" aria-labelledby="flowTitle flowDesc">
+          <title id="flowTitle">Blackjet Data Flow</title>
+          <desc id="flowDesc">A document is detected and tokenized locally. Only tokens
+            cross the network to the model API. The rehydration map is shared state: the
+            tokenizer writes it, the rehydrator reads it, and it never leaves this machine.</desc>
+          <defs>
+            <marker id="bjGrey" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 Z" fill="#9a9aa5"/>
+            </marker>
+            <marker id="bjWire" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 Z" fill="#5b5bd6"/>
+            </marker>
+            <marker id="bjMap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 Z" fill="#2f9e77"/>
+            </marker>
+          </defs>
+
+          <line x1="420" y1="8" x2="420" y2="312" stroke="#c98a2b" stroke-dasharray="5 6" opacity=".6"/>
+          <text x="410" y="20" text-anchor="end" fill="#c98a2b" font-size="11">this machine</text>
+          <text x="430" y="20" fill="#c98a2b" font-size="11">network</text>
+
+          <path d="M136 54 H170" fill="none" stroke="#9a9aa5" stroke-width="1.5" marker-end="url(#bjGrey)"/>
+          <path d="M346 54 H585 V130" fill="none" stroke="#5b5bd6" stroke-width="1.5" marker-end="url(#bjWire)"/>
+          <path d="M585 184 V266 H352" fill="none" stroke="#5b5bd6" stroke-width="1.5" marker-end="url(#bjWire)"/>
+          <path d="M176 266 H142" fill="none" stroke="#9a9aa5" stroke-width="1.5" marker-end="url(#bjGrey)"/>
+          <text x="470" y="44" fill="#5b5bd6" font-size="12" font-family="ui-monospace, monospace">&lt;&lt;PERSON_01&gt;&gt;</text>
+          <text x="470" y="258" fill="#5b5bd6" font-size="12">tokens return</text>
+
+          <path d="M240 78 L226 124" fill="none" stroke="#2f9e77" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#bjMap)"/>
+          <path d="M226 206 L240 236" fill="none" stroke="#2f9e77" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#bjMap)"/>
+          <text x="252" y="108" fill="#2f9e77" font-size="11">writes</text>
+          <text x="252" y="226" fill="#2f9e77" font-size="11">reads</text>
+
+          <rect x="16" y="30" width="120" height="48" rx="8" fill="#16161a" stroke="#44444f"/>
+          <text x="76" y="52" text-anchor="middle" fill="#e8e8ec" font-size="13">Document</text>
+          <text x="76" y="68" text-anchor="middle" fill="#9a9aa5" font-size="11">real values</text>
+
+          <rect x="176" y="30" width="170" height="48" rx="8" fill="#16161a" stroke="#44444f"/>
+          <text x="261" y="52" text-anchor="middle" fill="#e8e8ec" font-size="13">Detect + Tokenize</text>
+          <text x="261" y="68" text-anchor="middle" fill="#9a9aa5" font-size="11">local</text>
+
+          <rect x="500" y="136" width="170" height="48" rx="8" fill="#16161a" stroke="#44444f"/>
+          <text x="585" y="158" text-anchor="middle" fill="#e8e8ec" font-size="13">Model API</text>
+          <text x="585" y="174" text-anchor="middle" fill="#9a9aa5" font-size="11">sees tokens only</text>
+
+          <rect x="176" y="242" width="170" height="48" rx="8" fill="#16161a" stroke="#44444f"/>
+          <text x="261" y="264" text-anchor="middle" fill="#e8e8ec" font-size="13">Rehydrate</text>
+          <text x="261" y="280" text-anchor="middle" fill="#9a9aa5" font-size="11">local</text>
+
+          <rect x="16" y="242" width="120" height="48" rx="8" fill="#16161a" stroke="#44444f"/>
+          <text x="76" y="264" text-anchor="middle" fill="#e8e8ec" font-size="13">Final Output</text>
+          <text x="76" y="280" text-anchor="middle" fill="#9a9aa5" font-size="11">real values</text>
+
+          <rect x="96" y="130" width="210" height="76" rx="8" fill="#1b1b22" stroke="#2f9e77" stroke-dasharray="5 4"/>
+          <text x="201" y="152" text-anchor="middle" fill="#e8e8ec" font-size="13">Rehydration Map</text>
+          <text x="201" y="170" text-anchor="middle" fill="#9a9aa5" font-size="11" font-family="ui-monospace, monospace">token &#8594; real value</text>
+          <text x="201" y="192" text-anchor="middle" fill="#2f9e77" font-size="11">Never leaves this machine.</text>
+        </svg>
       </div>
-      <div class="logpane" id="logpane"><span class="empty">waiting for log…</span></div>
+      <h2>The Three Steps</h2>
+      <details class="collapsible">
+        <summary>1. Detect + Anonymize</summary>
+        <p>Emails, phones and URLs are found with deterministic patterns; names
+           and locations with NER (Microsoft Presidio, running locally). Each
+           value is replaced with a token like
+           <span class="tok">&lt;&lt;EMAIL_01&gt;&gt;</span> and the token&rarr;value
+           map is kept in memory here.</p>
+      </details>
+      <details class="collapsible">
+        <summary>2. Send</summary>
+        <p>The tokenized text goes to the configured model endpoint &mdash; by
+           default a local Ollama. A tripwire re-scans the outbound payload
+           first and blocks the send if any real value remains. The map is
+           never part of the request, so it cannot be leaked or
+           prompt-injected out. It simply isn't there.</p>
+      </details>
+      <details class="collapsible">
+        <summary>3. Rehydrate</summary>
+        <p>Tokens in the response are swapped back for real values, locally.
+           Any token the model altered is surfaced as an error, never
+           silently dropped.</p>
+      </details>
+      <h2>Honest Limitations</h2>
+      <div class="panel">
+        <p>Detection is probabilistic. A missed name is sent in the clear, which is
+           why recall must be measured, not assumed.</p>
+        <p>Tokenization also does not solve re-identification from context: "sole
+           female VP at a 40-person Reykjav&iacute;k fintech" identifies someone with
+           every name removed.</p>
+      </div>
+      <div class="loghead">
+        <h2>Runtime Log</h2>
+        <span class="note">Every line below passes the same redaction filter as
+        outbound payloads, so no real value can appear here.</span>
+      </div>
+      <details class="collapsible">
+        <summary>How Log Redaction Works</summary>
+        <p>Values shorter than 4 characters (e.g. a state code) are
+           deliberately not redacted. Corpus filenames are registered as
+           secrets at startup, so even <code>Loading &lt;file&gt;.pdf</code>
+           shows <code>[REDACTED]</code>.</p>
+      </details>
+      <div class="logpane" id="logpane"><span class="empty">Waiting for log…</span></div>
     </div>
   </section>
 
@@ -208,7 +294,7 @@ async function loadCorpus() {
       sel.appendChild(o);
     }
     if (!data.documents.length) {
-      sel.innerHTML = "<option>no documents in data/resumes</option>";
+      sel.innerHTML = "<option>No documents found in data/resumes</option>";
     }
   } catch (e) {
     console.error("corpus load failed", e);

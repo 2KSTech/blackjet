@@ -71,7 +71,7 @@ def _guarded_pattern(value: str) -> str:
     return pattern
 
 
-def anonymize(text: str, session: Session) -> tuple[str, list[Finding]]:
+def anonymize(text: str, session: Session, value_spans=None) -> tuple[str, list[Finding]]:
     """Replace every occurrence of every detected PII value with its token.
 
     Substitution is **document-level**, per spec v0.4 §5.3: "Same real value ->
@@ -105,7 +105,7 @@ def anonymize(text: str, session: Session) -> tuple[str, list[Finding]]:
         raise PipelineError("anonymize() requires non-empty text")
 
     try:
-        findings = detect(text)
+        findings = detect(text, value_spans=value_spans)
     except Exception as exc:
         # Fail closed. If detection breaks we must not fall through to sending
         # the original text — that is the exact failure this app exists to
@@ -151,7 +151,25 @@ def anonymize(text: str, session: Session) -> tuple[str, list[Finding]]:
         replaced += 1
         return token
 
-    out = combined.sub(_sub, text)
+    if value_spans:
+        # Substitute inside data values only. The document-wide pass below is
+        # right for an undifferentiated string, but on a structured document it
+        # would also rewrite key names and could break the syntax — the user
+        # would get back something that is no longer their file. Confining the
+        # pass to value spans keeps the document parseable by construction while
+        # preserving the "same value -> same token throughout" rule within them.
+        pieces: list[str] = []
+        cursor = 0
+        for span in sorted(value_spans, key=lambda s: s.start):
+            if span.start < cursor:
+                continue
+            pieces.append(text[cursor : span.start])
+            pieces.append(combined.sub(_sub, text[span.start : span.end]))
+            cursor = span.end
+        pieces.append(text[cursor:])
+        out = "".join(pieces)
+    else:
+        out = combined.sub(_sub, text)
 
     log.info(
         "Anonymized document: %d detected span(s), %d distinct value(s), "
